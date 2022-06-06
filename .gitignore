@@ -1,0 +1,15 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+/build
+app/libs/
+app/src/main/assets/app
+captures/
+release/
+app/src/main/assets/vue/*
+vue/node_modules
+vue/.idea
+vue/package-lock.json
+vue/html/js/*
+vue/html/css/*
