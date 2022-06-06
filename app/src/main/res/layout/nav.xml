@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_drawer"
+    android:layout_width="170dp"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    android:orientation="vertical"
+    android:gravity="bottom">
+
+    <!--
+    Ratings
+    -->
+
+    <LinearLayout
+        android:id="@+id/ratings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="ratings">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@drawable/si_ratings"
+            android:contentDescription="@string/ratings" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/ratings" />
+    </LinearLayout>
+
+    <!--
+    History
+    -->
+
+    <LinearLayout
+        android:id="@+id/history"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="history">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@drawable/si_history"
+            android:contentDescription="@string/history" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/history" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"/>
+
+    <!--
+    My Favorites
+    -->
+
+    <LinearLayout
+        android:id="@+id/user_favorites"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="user-favorites">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@drawable/si_favorites"
+            android:contentDescription="@string/ratings" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/my_likes" />
+    </LinearLayout>
+
+    <!--
+    My Profile
+    -->
+
+    <LinearLayout
+        android:id="@+id/user"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="user">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@drawable/si_profile"
+            android:contentDescription="@string/ratings" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/my_profile" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray"/>
+
+    <!--
+    Settings
+    -->
+
+    <LinearLayout
+        android:id="@+id/settings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="settings">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@drawable/si_settings"
+            android:contentDescription="@string/ratings" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/settings" />
+    </LinearLayout>
+
+
+    <!--
+    About
+    -->
+
+    <LinearLayout
+        android:id="@+id/about"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="about">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@drawable/si_help"
+            android:contentDescription="@string/ratings" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/about" />
+    </LinearLayout>
+
+
+    <!--
+    Support
+    -->
+
+    <LinearLayout
+        android:id="@+id/support"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/nav_item_padding"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:tag="donate">
+
+        <ImageView
+            android:layout_width="@dimen/nav_icon_size"
+            android:layout_height="@dimen/nav_icon_size"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="@string/ratings" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/nav_icon_size"
+            android:gravity="center|start"
+            android:textSize="@dimen/nav_text_size"
+            android:textColor="#000000"
+            android:layout_marginStart="@dimen/nav_text_left"
+            android:textStyle="normal"
+            android:fontFamily="@font/tahoma"
+            android:text="@string/support" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,15 +1,36 @@
-*.iml
-.gradle
-/local.properties
-/.idea
-/build
-app/libs/
-app/src/main/assets/app
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log/OS Files
+*.log
+
+# Android Studio generated files and folders
 captures/
-release/
-app/src/main/assets/vue/*
-vue/node_modules
-vue/.idea
-vue/package-lock.json
-vue/html/js/*
-vue/html/css/*
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# App view
+app/src/main/assets/app/*
