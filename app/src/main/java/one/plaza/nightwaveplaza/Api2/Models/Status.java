@@ -133,7 +133,7 @@ public class Status {
             json.put("artwork_src", Artwork.getArtworkPath(ctx));
             json.put("sleepTime", getSleepTime(ctx));
             json.put("position", getCurrentPosition(ctx));
-            json.put("likes", song.reactions);
+            json.put("reactions", song.reactions);
             json.put("listeners", getListeners(ctx));
             return json.toString();
         } catch (JSONException e) {
