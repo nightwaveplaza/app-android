@@ -5,7 +5,6 @@ import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Metadata
@@ -22,25 +21,17 @@ import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.ListenableFuture
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.helpers.PrefKeys
-import one.plaza.nightwaveplaza.helpers.SongHelper
 import one.plaza.nightwaveplaza.helpers.StorageHelper
 
 @UnstableApi class PlayerService: MediaLibraryService() {
 
     private lateinit var player: Player
     private lateinit var mediaLibrarySession: MediaLibrarySession
-    private lateinit var statusUpdateJob: Job
     private var mContext = this as Context
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession {
-        return mediaLibrarySession;
+        return mediaLibrarySession
     }
 
     override fun onCreate() {
@@ -51,7 +42,6 @@ import one.plaza.nightwaveplaza.helpers.StorageHelper
         val notificationProvider: DefaultMediaNotificationProvider = CustomNotificationProvider()
         notificationProvider.setSmallIcon(R.drawable.ic_launcher_foreground)
         setMediaNotificationProvider(notificationProvider)
-//        runStatusUpdate()
     }
 
     override fun onDestroy() {
@@ -60,7 +50,6 @@ import one.plaza.nightwaveplaza.helpers.StorageHelper
         player.release()
         mediaLibrarySession.release()
         super.onDestroy()
-//        statusUpdateJob.cancel()
     }
 
     override fun onTaskRemoved(rootIntent: Intent) {
@@ -119,7 +108,7 @@ import one.plaza.nightwaveplaza.helpers.StorageHelper
 //            builder.add(SessionCommand(Keys.CMD_CANCEL_SLEEP_TIMER, Bundle.EMPTY))
 //            builder.add(SessionCommand(Keys.CMD_REQUEST_SLEEP_TIMER_REMAINING, Bundle.EMPTY))
 //            builder.add(SessionCommand(Keys.CMD_REQUEST_METADATA_HISTORY, Bundle.EMPTY))
-            return MediaSession.ConnectionResult.accept(builder.build(), connectionResult.availablePlayerCommands);
+            return MediaSession.ConnectionResult.accept(builder.build(), connectionResult.availablePlayerCommands)
         }
 
         override fun onCustomCommand(session: MediaSession, controller: MediaSession.ControllerInfo, customCommand: SessionCommand, args: Bundle): ListenableFuture<SessionResult> {
@@ -186,38 +175,6 @@ import one.plaza.nightwaveplaza.helpers.StorageHelper
 
         override fun onMetadata(metadata: Metadata) {
             super.onMetadata(metadata)
-        }
-    }
-
-    private fun runStatusUpdate() {
-        statusUpdateJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.IO) {
-            val client = ApiClient()
-            var updateInterval = 0L
-            var isPlaying: Boolean
-            while (true) {
-                withContext(Dispatchers.Main) {
-                    isPlaying = player.isPlaying
-                }
-
-                if (!isPlaying) continue
-
-                if  (System.currentTimeMillis() - updateInterval > 10000) {
-                    try {
-                        val status: ApiClient.Status = client.getStatus()
-                        SongHelper.setSong(status.song)
-                        withContext(Dispatchers.Main) {
-                            //updateMetadata(status.song!!.id)
-                            println("SENDING")
-//                            mediaLi.onMediaMetadataChanged(SongHelper.getSongAsMetadata())
-                        }
-                    } catch(err: Exception) {
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(mContext, err.message, Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    updateInterval = System.currentTimeMillis()
-                }
-            }
         }
     }
 }

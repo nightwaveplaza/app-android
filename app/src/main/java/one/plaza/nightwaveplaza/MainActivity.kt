@@ -291,7 +291,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startBgPlayer() {
         createBgPlayer()
-        bgPlayerView?.onResume();
+        bgPlayerView?.onResume()
     }
 
     fun setBackground(backgroundSrc: String?) {
