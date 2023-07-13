@@ -1,74 +1,75 @@
-apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'com.google.firebase.crashlytics'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion '32.0.0'
+    namespace 'one.plaza.nightwaveplaza'
+    compileSdk 34
+
     defaultConfig {
         applicationId "one.plaza.nightwaveplaza"
-        minSdkVersion 21
-        targetSdkVersion 33
-        versionCode 202
-        versionName "1.4.1"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        setProperty("archivesBaseName", "NightwavePlaza" + "-v" + versionName + " (" + versionCode + ")")
+        minSdk 21
+        targetSdk 34
+        versionCode 203
+        versionName "2.0"
+
+        vectorDrawables {
+            useSupportLibrary true
+        }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_16
-        targetCompatibility JavaVersion.VERSION_16
-    }
+
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            firebaseCrashlytics {
-                mappingFileUploadEnabled true
-            }
         }
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            firebaseCrashlytics {
-                mappingFileUploadEnabled false
-            }
         }
     }
     buildFeatures {
         viewBinding true
     }
-    namespace 'one.plaza.nightwaveplaza'
-    applicationVariants.all { variant ->
-        variant.outputs.all { output ->
-            outputFileName = "NightwavePlaza-${variant.name}-${variant.versionName}-${variant.versionCode}.apk"
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-    implementation 'androidx.webkit:webkit:1.4.0'
-    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-        exclude group: 'com.google.code.findbugs', module: 'jsr305'
-    })
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation "androidx.activity:activity-ktx:1.7.2"
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.0')
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.activity:activity-compose:1.7.2'
+    implementation "androidx.preference:preference-ktx:1.2.0"
+    implementation platform('androidx.compose:compose-bom:2022.10.00')
+//    implementation 'androidx.compose.ui:ui'
+//    implementation 'androidx.compose.ui:ui-graphics'
+//    implementation 'androidx.compose.ui:ui-tooling-preview'
+//    implementation 'androidx.compose.material3:material3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
 
-    implementation 'androidx.media:media:1.6.0'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.11.0-alpha01'
-    implementation 'com.google.android.exoplayer:exoplayer:2.17.1'
-    implementation 'com.google.android.exoplayer:extension-mediasession:2.17.1'
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation "androidx.media:media:1.6.0"
+    implementation "androidx.media3:media3-exoplayer:1.1.0"
+    implementation "androidx.media3:media3-exoplayer-hls:1.1.0"
+    implementation "androidx.media3:media3-session:1.1.0"
+
+
+    implementation 'com.google.code.gson:gson:2.10'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
-    implementation 'com.github.bumptech.glide:glide:4.12.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
-    implementation 'org.greenrobot:eventbus:3.3.1'
-    implementation 'androidx.preference:preference:1.2.0'
-//    testImplementation 'junit:junit:4.12'
-
-    // Import the BoM for the Firebase platform
-    implementation platform('com.google.firebase:firebase-bom:27.1.0')
-    implementation 'com.google.firebase:firebase-crashlytics'
+    implementation 'androidx.webkit:webkit:1.7.0'
+    implementation 'androidx.media3:media3-ui:1.1.0'
 }
