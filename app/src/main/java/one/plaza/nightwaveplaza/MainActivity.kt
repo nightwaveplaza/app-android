@@ -47,11 +47,13 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
+import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.helpers.JsonHelper
-import one.plaza.nightwaveplaza.helpers.PrefKeys
+import one.plaza.nightwaveplaza.helpers.Keys
 import one.plaza.nightwaveplaza.helpers.StorageHelper
 import one.plaza.nightwaveplaza.helpers.UserHelper
 import java.io.File
+import java.util.Locale
 
 
 @UnstableApi
@@ -68,7 +70,6 @@ class MainActivity : AppCompatActivity() {
 
     private var viewLoading = true
     private var fullscreen = false
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +90,6 @@ class MainActivity : AppCompatActivity() {
         bgPlayerView = findViewById(R.id.bg_view)
         drawer = findViewById(R.id.drawer)
 
-
         initializeWebView()
         setupDrawer()
     }
@@ -99,7 +99,8 @@ class MainActivity : AppCompatActivity() {
         initializeController()
         println("onStart")
         if (Build.VERSION.SDK_INT > 23) {
-            startBgPlayer()
+            initializeBgPlayer()
+            bgPlayerView?.onResume()
             resumeWebView()
         }
     }
@@ -109,7 +110,8 @@ class MainActivity : AppCompatActivity() {
         println("onStop")
         releaseController()
         if (Build.VERSION.SDK_INT > 23) {
-            pauseBgPlayer()
+
+            releaseBgPlayer()
             pauseWebView()
         }
     }
@@ -120,7 +122,8 @@ class MainActivity : AppCompatActivity() {
         setFullscreen(fullscreen)
 
         if (Build.VERSION.SDK_INT <= 23 || bgPlayer == null) {
-            startBgPlayer()
+            initializeBgPlayer()
+            bgPlayerView?.onResume()
         }
 
         if (Build.VERSION.SDK_INT <= 23) {
@@ -130,13 +133,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        webView.onPause()
         println("onPause")
 
         if (Build.VERSION.SDK_INT <= 23) {
-            pauseBgPlayer()
+            bgPlayerView?.onPause()
+            releaseBgPlayer()
             pauseWebView()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        bgPlayerCache?.release()
+        bgPlayerCache = null
     }
 
     private fun setupDrawer() {
@@ -179,6 +188,7 @@ class MainActivity : AppCompatActivity() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             pushViewData("isPlaying", isPlaying.toString())
+            pushViewData("sleepTime", StorageHelper.load(Keys.SLEEP_TIMER, 0L).toString())
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -237,7 +247,8 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 viewLoading = false
-                pushViewData("isPlaying", StorageHelper.load(PrefKeys.IS_PLAYING, false).toString())
+                pushViewData("isPlaying", StorageHelper.load(Keys.IS_PLAYING, false).toString())
+                pushViewData("sleepTime", StorageHelper.load(Keys.SLEEP_TIMER, 0L).toString())
             }
         }
         webView.loadUrl("https://appassets.androidplatform.net/assets/app/index.html")
@@ -247,7 +258,7 @@ class MainActivity : AppCompatActivity() {
         webView.onResume()
         webView.resumeTimers()
         webView.reload()
-        pushViewData("isPlaying", StorageHelper.load(PrefKeys.IS_PLAYING, false).toString())
+        pushViewData("isPlaying", StorageHelper.load(Keys.IS_PLAYING, false).toString())
     }
 
     private fun pauseWebView() {
@@ -261,7 +272,8 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread { webView.evaluateJavascript(call, null) }
     }
 
-    private fun createBgPlayer() {
+    private fun initializeBgPlayer() {
+        println("initializeBgPlayer")
         if (bgPlayer == null) {
             bgPlayer = ExoPlayer.Builder(this).build()
             bgPlayer?.repeatMode = Player.REPEAT_MODE_ALL
@@ -276,22 +288,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun releasePlayerAndCache() {
+    private fun releaseBgPlayer() {
+        println("releaseBgPlayer")
         bgPlayerView?.player = null
         bgPlayerCache?.release()
         bgPlayerCache = null
         bgPlayer?.release()
         bgPlayer = null
-    }
-
-    private fun pauseBgPlayer() {
-        bgPlayerView?.onPause()
-        releasePlayerAndCache()
-    }
-
-    private fun startBgPlayer() {
-        createBgPlayer()
-        bgPlayerView?.onResume()
     }
 
     fun setBackground(backgroundSrc: String?) {
@@ -308,7 +311,7 @@ class MainActivity : AppCompatActivity() {
             bgPlayer!!.stop()
             bgPlayer!!.seekTo(0)
         } else {
-            StorageHelper.save(PrefKeys.BACKGROUND, uri.toString())
+            StorageHelper.save(Keys.BACKGROUND, uri.toString())
 
             val dsf: DataSource.Factory = DefaultDataSource.Factory(this)
             val cacheDataSourceFactory: DataSource.Factory =
@@ -326,7 +329,7 @@ class MainActivity : AppCompatActivity() {
 
     fun toggleFullscreen() {
         fullscreen = !fullscreen
-        StorageHelper.save(PrefKeys.FULLSCREEN, fullscreen)
+        StorageHelper.save(Keys.FULLSCREEN, fullscreen)
         setFullscreen(fullscreen)
     }
 
@@ -373,5 +376,17 @@ class MainActivity : AppCompatActivity() {
         toast?.cancel()
         toast = Toast.makeText(this, msg, Toast.LENGTH_LONG)
         toast?.show()
+    }
+
+    fun setSleepTimer(minutes: Int) {
+        if (minutes == 0) {
+            makeToast(getString(R.string.timer_disabled))
+        } else {
+            makeToast(String.format(Locale.US, getString(R.string.timer_start), minutes))
+        }
+
+        val time: Long = if (minutes > 0) System.currentTimeMillis() + (minutes * 60 * 1000L) else 0
+        StorageHelper.save(Keys.SLEEP_TIMER, time)
+        controller?.setSleepTimer()
     }
 }

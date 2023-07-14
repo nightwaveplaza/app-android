@@ -2,14 +2,16 @@ package one.plaza.nightwaveplaza.extensions
 
 import android.content.Context
 import android.net.Uri
+import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
-import one.plaza.nightwaveplaza.helpers.PrefKeys
+import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionResult
+import com.google.common.util.concurrent.ListenableFuture
+import one.plaza.nightwaveplaza.helpers.Keys
 import one.plaza.nightwaveplaza.helpers.StorageHelper
 
-const val URI_MP3 = "https://radio.plaza.one/mp3"
-const val URI_MP3_LOW = "https://radio.plaza.one/mp3_96"
 
 fun MediaController.play(context: Context) {
     if (isPlaying) pause()
@@ -20,8 +22,8 @@ fun MediaController.play(context: Context) {
 }
 
 fun prepareUri(): MediaItem {
-    val lowQuality = StorageHelper.load(PrefKeys.AUDIO_QUALITY, 0) == 1
-    val streamUrl = if (lowQuality) URI_MP3 else URI_MP3_LOW
+    val lowQuality = StorageHelper.load(Keys.AUDIO_QUALITY, 0) == 1
+    val streamUrl = if (lowQuality) Keys.URI_MP3 else Keys.URI_MP3_LOW
 
     val requestMetadata = MediaItem.RequestMetadata.Builder().apply {
         setMediaUri(Uri.parse(streamUrl))
@@ -37,4 +39,14 @@ fun prepareUri(): MediaItem {
         setMediaMetadata(mediaMetadata)
         setUri(Uri.parse("https://radio.plaza.one/mp3"))
     }.build()
+}
+
+fun MediaController.setSleepTimer() {
+    sendCustomCommand(SessionCommand(Keys.SET_TIMER, Bundle.EMPTY), Bundle.EMPTY)
+}
+
+
+/* Request sleep timer remaining */
+fun MediaController.requestSleepTimerRemaining(): ListenableFuture<SessionResult> {
+    return sendCustomCommand(SessionCommand(Keys.TIMER_REMAINING, Bundle.EMPTY), Bundle.EMPTY)
 }

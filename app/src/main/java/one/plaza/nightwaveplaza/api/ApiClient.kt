@@ -53,7 +53,7 @@ class ApiClient {
      * Make okhttp request
      */
     @Throws(Exception::class)
-    public fun getStatus(): Status {
+    fun getStatus(): Status {
         val request: Request = Request.Builder().url("$baseUrl/status").build()
         var resp: String?
         try {

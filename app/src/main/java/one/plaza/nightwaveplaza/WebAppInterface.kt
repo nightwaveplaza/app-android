@@ -2,7 +2,7 @@ package one.plaza.nightwaveplaza
 
 import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
-import one.plaza.nightwaveplaza.helpers.PrefKeys
+import one.plaza.nightwaveplaza.helpers.Keys
 import one.plaza.nightwaveplaza.helpers.StorageHelper
 import one.plaza.nightwaveplaza.helpers.UserHelper
 import one.plaza.nightwaveplaza.helpers.Utils
@@ -65,14 +65,21 @@ class WebAppInterface(private val activity: MainActivity) {
 
     @JavascriptInterface
     fun getAudioQuality(): Int {
-        return StorageHelper.load(PrefKeys.AUDIO_QUALITY, 0)
+        return StorageHelper.load(Keys.AUDIO_QUALITY, 0)
     }
 
     @JavascriptInterface
     fun setAudioQuality(lowQuality: Int) {
-        StorageHelper.save(PrefKeys.AUDIO_QUALITY, lowQuality)
+        StorageHelper.save(Keys.AUDIO_QUALITY, lowQuality)
         activity.runOnUiThread {
             activity.setAudioQuality(lowQuality)
+        }
+    }
+
+    @JavascriptInterface
+    fun setSleepTimer(minutes: Int) {
+        activity.runOnUiThread {
+            activity.setSleepTimer(minutes)
         }
     }
 }
