@@ -109,8 +109,9 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         println("onStop")
         releaseController()
-        if (Build.VERSION.SDK_INT > 23) {
 
+        // https://github.com/google/ExoPlayer/issues/4878
+        if (Build.VERSION.SDK_INT > 23) {
             releaseBgPlayer()
             pauseWebView()
         }
