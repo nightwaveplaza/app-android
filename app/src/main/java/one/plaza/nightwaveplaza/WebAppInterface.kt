@@ -32,7 +32,7 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun setBackground(backgroundSrc: String?) {
+    fun setBackground(backgroundSrc: String) {
         activity.runOnUiThread {
             activity.setBackground(backgroundSrc)
         }

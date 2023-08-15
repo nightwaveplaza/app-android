@@ -99,8 +99,7 @@ class MainActivity : AppCompatActivity() {
         initializeController()
         println("onStart")
         if (Build.VERSION.SDK_INT > 23) {
-            initializeBgPlayer()
-            bgPlayerView?.onResume()
+            resumeBgPlayer()
             resumeWebView()
         }
     }
@@ -112,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 
         // https://github.com/google/ExoPlayer/issues/4878
         if (Build.VERSION.SDK_INT > 23) {
-            releaseBgPlayer()
+            pauseBgPlayer()
             pauseWebView()
         }
     }
@@ -122,12 +121,8 @@ class MainActivity : AppCompatActivity() {
         println("onResume")
         setFullscreen(fullscreen)
 
-        if (Build.VERSION.SDK_INT <= 23 || bgPlayer == null) {
-            initializeBgPlayer()
-            bgPlayerView?.onResume()
-        }
-
         if (Build.VERSION.SDK_INT <= 23) {
+            resumeBgPlayer()
             resumeWebView()
         }
     }
@@ -137,16 +132,14 @@ class MainActivity : AppCompatActivity() {
         println("onPause")
 
         if (Build.VERSION.SDK_INT <= 23) {
-            bgPlayerView?.onPause()
-            releaseBgPlayer()
+            pauseBgPlayer()
             pauseWebView()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        bgPlayerCache?.release()
-        bgPlayerCache = null
+        releaseBgPlayer()
     }
 
     private fun setupDrawer() {
@@ -217,11 +210,16 @@ class MainActivity : AppCompatActivity() {
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
+
         val assetLoader: WebViewAssetLoader = WebViewAssetLoader.Builder()
-            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+//            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .addPathHandler("/assets/",
+                WebViewAssetLoader.InternalStoragePathHandler(this, File("$cacheDir/assets"))
+            )
             .addPathHandler(
                 "/artworks/",
                 WebViewAssetLoader.InternalStoragePathHandler(this, File("$cacheDir/artworks"))
@@ -252,13 +250,15 @@ class MainActivity : AppCompatActivity() {
                 pushViewData("sleepTime", StorageHelper.load(Keys.SLEEP_TIMER, 0L).toString())
             }
         }
-        webView.loadUrl("https://appassets.androidplatform.net/assets/app/index.html")
+
+        webView.loadUrl("https://m.plaza.one")
     }
 
     private fun resumeWebView() {
         webView.onResume()
         webView.resumeTimers()
-        webView.reload()
+//        webView.reload()
+//        pushViewData("resume", "")
         pushViewData("isPlaying", StorageHelper.load(Keys.IS_PLAYING, false).toString())
     }
 
@@ -287,6 +287,8 @@ class MainActivity : AppCompatActivity() {
             val cacheEvictor = LeastRecentlyUsedCacheEvictor(1024 * 1024 * 100)
             bgPlayerCache = SimpleCache(cacheFolder, cacheEvictor, StandaloneDatabaseProvider(this))
         }
+
+        bgPlayerView?.player?.playWhenReady = true
     }
 
     private fun releaseBgPlayer() {
@@ -298,7 +300,17 @@ class MainActivity : AppCompatActivity() {
         bgPlayer = null
     }
 
-    fun setBackground(backgroundSrc: String?) {
+    private fun resumeBgPlayer() {
+        bgPlayerView?.onResume()
+        bgPlayerView?.player?.playWhenReady = true
+    }
+
+    private fun pauseBgPlayer() {
+        bgPlayerView?.onPause()
+        bgPlayerView?.player?.pause()
+    }
+
+    fun setBackground(backgroundSrc: String) {
         if (bgPlayer == null || bgPlayerCache == null) return
 
         val uri: Uri? = if (backgroundSrc != "solid") {
@@ -312,7 +324,6 @@ class MainActivity : AppCompatActivity() {
             bgPlayer!!.stop()
             bgPlayer!!.seekTo(0)
         } else {
-            StorageHelper.save(Keys.BACKGROUND, uri.toString())
 
             val dsf: DataSource.Factory = DefaultDataSource.Factory(this)
             val cacheDataSourceFactory: DataSource.Factory =
