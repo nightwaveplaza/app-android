@@ -43,7 +43,7 @@ class PlayerService : MediaLibraryService() {
         initializeSession()
 
         val notificationProvider: DefaultMediaNotificationProvider = CustomNotificationProvider()
-        notificationProvider.setSmallIcon(R.drawable.ic_launcher_foreground)
+        notificationProvider.setSmallIcon(R.drawable.ic_cat)
         setMediaNotificationProvider(notificationProvider)
     }
 
