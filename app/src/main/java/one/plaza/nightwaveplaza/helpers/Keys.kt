@@ -2,7 +2,7 @@ package one.plaza.nightwaveplaza.helpers
 
 object Keys {
     // Playback
-    const val IS_PLAYING = "IsPlaying"
+//    const val IS_PLAYING = "IsPlaying"
     const val SLEEP_TIMER = "sleepTimer"
 
     // Settings

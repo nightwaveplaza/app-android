@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Metadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
@@ -22,6 +24,7 @@ import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.ListenableFuture
+import okhttp3.internal.notify
 import one.plaza.nightwaveplaza.helpers.Keys
 import one.plaza.nightwaveplaza.helpers.StorageHelper
 
@@ -58,7 +61,7 @@ class PlayerService : MediaLibraryService() {
     }
 
     private fun closePlayer() {
-        StorageHelper.save(Keys.IS_PLAYING, false)
+//        StorageHelper.save(Keys.IS_PLAYING, false)
         StorageHelper.save(Keys.SLEEP_TIMER, 0L)
         player.removeListener(playerListener)
         player.release()
@@ -180,7 +183,7 @@ class PlayerService : MediaLibraryService() {
     private var playerListener: Player.Listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            StorageHelper.save(Keys.IS_PLAYING, isPlaying)
+//            StorageHelper.save(Keys.IS_PLAYING, isPlaying)
         }
     }
 

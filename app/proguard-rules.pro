@@ -54,6 +54,7 @@
 ##---------------End: proguard configuration for Gson  ----------
 
 ############ Keep models
+-keep class androidx.annotation.Keep {*;}
 -keepclassmembers class one.plaza.nightwaveplaza.api.ApiClient.* { *; }
 ############ / Keep models
 

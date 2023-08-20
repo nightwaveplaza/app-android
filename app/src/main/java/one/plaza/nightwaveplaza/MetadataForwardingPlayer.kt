@@ -1,9 +1,11 @@
 package one.plaza.nightwaveplaza
 
+import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Metadata
 import androidx.media3.common.Player
+import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,14 +19,14 @@ import one.plaza.nightwaveplaza.helpers.SongHelper
 //         https://github.com/androidx/media/issues/258#issuecomment-1453449978
 @UnstableApi class MetadataForwardingPlayer(wrapped: Player) : ForwardingPlayer(wrapped) {
 
-    private val fromPlayerListener: Player.Listener = object : Player.Listener {
+    private val fromPlayerListener: Listener = object : Listener {
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             fetchNewMetadata()
         }
         override fun onMetadata(metadata: Metadata) = Unit
     }
 
-    private val listenerSet: MutableSet<Player.Listener> = mutableSetOf()
+    private val listenerSet: MutableSet<Listener> = mutableSetOf()
 
     init {
         wrapped.addListener(fromPlayerListener)
@@ -32,7 +34,7 @@ import one.plaza.nightwaveplaza.helpers.SongHelper
 
     // Credit https://github.com/androidx/media/issues/265#issuecomment-1465266989
     override fun getDuration(): Long {
-        return -1L
+        return C.TIME_UNSET
     }
 
     override fun getAvailableCommands(): Player.Commands {
@@ -51,11 +53,11 @@ import one.plaza.nightwaveplaza.helpers.SongHelper
         return SongHelper.getSongAsMetadata()
     }
 
-    override fun addListener(listener: Player.Listener) {
+    override fun addListener(listener: Listener) {
         super.addListener(listener.also { listenerSet.add(it) })
     }
 
-    override fun removeListener(listener: Player.Listener) {
+    override fun removeListener(listener: Listener) {
         super.removeListener(listener.also { listenerSet.remove(it) })
     }
 

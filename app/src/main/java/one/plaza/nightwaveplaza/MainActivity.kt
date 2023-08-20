@@ -223,6 +223,7 @@ class MainActivity : AppCompatActivity() {
         webSettings.cacheMode = WebSettings.LOAD_DEFAULT
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
@@ -268,12 +269,12 @@ class MainActivity : AppCompatActivity() {
                     // Show toast and try again
                     makeToast(getString(R.string.no_internet))
                     activity.lifecycleScope.launch {
-                        delay(10000)
+                        delay(5000)
                         view.reload()
                     }
                 } else {
                     viewLoading = false
-                    pushViewData("isPlaying", StorageHelper.load(Keys.IS_PLAYING, false).toString())
+                    pushViewData("isPlaying", controller?.isPlaying.toString())
                     pushViewData("sleepTime", StorageHelper.load(Keys.SLEEP_TIMER, 0L).toString())
                 }
 
@@ -290,7 +291,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webView.loadUrl(if (BuildConfig.DEBUG) "http://plaza.dev:4173/" else "https://m.plaza.one")
+//        webView.loadUrl("http://plaza.dev:4173/")
+        webView.loadUrl("https://m.plaza.one")
     }
 
     private fun resumeWebView() {
@@ -300,7 +302,7 @@ class MainActivity : AppCompatActivity() {
         if (viewError) {
             webView.reload()
         }
-        pushViewData("isPlaying", StorageHelper.load(Keys.IS_PLAYING, false).toString())
+        pushViewData("isPlaying", controller?.isPlaying.toString())
     }
 
     private fun pauseWebView() {
@@ -407,10 +409,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun openDrawer() {
-        drawer?.openDrawer(GravityCompat.START)
-    }
-
     private fun showWindow(view: View) {
         var window = view.tag.toString()
         if (window == "user-favorites" || window == "user") {
@@ -445,5 +443,9 @@ class MainActivity : AppCompatActivity() {
         val time: Long = if (minutes > 0) System.currentTimeMillis() + (minutes * 60 * 1000L) else 0
         StorageHelper.save(Keys.SLEEP_TIMER, time)
         controller?.setSleepTimer()
+    }
+
+    fun openDrawer() {
+        drawer?.openDrawer(GravityCompat.START)
     }
 }

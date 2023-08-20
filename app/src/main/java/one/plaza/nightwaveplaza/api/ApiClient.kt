@@ -1,5 +1,6 @@
 package one.plaza.nightwaveplaza.api
 
+import androidx.annotation.Keep
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
@@ -10,14 +11,13 @@ import okhttp3.Request
 import okio.IOException
 import one.plaza.nightwaveplaza.helpers.Utils
 
-
 class ApiClient {
-    data class Status(
+    @Keep data class Status(
         val song: Song = Song(),
         val listeners: Int = 0
     )
 
-    data class Song(
+    @Keep data class Song(
         var id: String = "",
         var artist: String = "",
         var title: String = "",

@@ -30,7 +30,7 @@ object SongHelper {
             setIsPlayable(true)
             setArtist(song.artist)
             setTitle(song.title)
-            setArtworkUri(Uri.parse(song.artworkSrc))
+                setArtworkUri(Uri.parse(song.artworkSrc))
         }.build()
     }
 }
