@@ -3,6 +3,6 @@
 
     <style name="LaunchTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowSplashScreenBackground">@color/splash_bg</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_splash_icon</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_splash_icon_foreground</item>
     </style>
 </resources>
