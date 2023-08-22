@@ -2,9 +2,6 @@ package one.plaza.nightwaveplaza
 
 import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
-import one.plaza.nightwaveplaza.helpers.Keys
-import one.plaza.nightwaveplaza.helpers.StorageHelper
-import one.plaza.nightwaveplaza.helpers.UserHelper
 import one.plaza.nightwaveplaza.helpers.Utils
 
 @UnstableApi
@@ -46,8 +43,8 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun getAuthToken(): String? {
-        return UserHelper.getToken()
+    fun getAuthToken(): String {
+        return Settings.userToken
     }
 
     @JavascriptInterface
@@ -55,7 +52,7 @@ class WebAppInterface(private val activity: MainActivity) {
 //        if (token.isEmpty()) {
 //            activity.pushViewData("reactionUpdate", Reaction.getAsJson(mActivity))
 //        }
-        UserHelper.setToken(token)
+        Settings.userToken = token
     }
 
     @JavascriptInterface
@@ -64,13 +61,13 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun getAudioQuality(): Int {
-        return StorageHelper.load(Keys.AUDIO_QUALITY, 0)
+    fun getAudioQuality(): Boolean {
+        return Settings.lowQualityAudio
     }
 
     @JavascriptInterface
-    fun setAudioQuality(lowQuality: Int) {
-        StorageHelper.save(Keys.AUDIO_QUALITY, lowQuality)
+    fun setAudioQuality(lowQuality: Boolean) {
+        Settings.lowQualityAudio = lowQuality
         activity.runOnUiThread {
             activity.setAudioQuality(lowQuality)
         }

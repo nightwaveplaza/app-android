@@ -16,8 +16,8 @@ object StorageHelper {
         sharedPreferences.edit().putString(name, value).apply()
     }
 
-    fun load(name: String, def: String): String? {
-        return sharedPreferences.getString(name, def)
+    fun load(name: String, def: String): String {
+        return sharedPreferences.getString(name, def) ?: def
     }
 
     // Save-load int

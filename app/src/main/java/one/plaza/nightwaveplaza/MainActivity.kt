@@ -51,9 +51,6 @@ import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.helpers.JsonHelper
-import one.plaza.nightwaveplaza.helpers.Keys
-import one.plaza.nightwaveplaza.helpers.StorageHelper
-import one.plaza.nightwaveplaza.helpers.UserHelper
 import java.io.File
 import java.util.Locale
 
@@ -70,10 +67,9 @@ class MainActivity : AppCompatActivity() {
     private var bgPlayerView: PlayerView? = null
     private var drawer: DrawerLayout? = null
 
-    private var viewLoading = true
-    private var viewError = false
-    private var viewPaused = false
-    private var fullscreen = false
+    private var webViewLoading = true
+    private var webViewError = false
+    private var webViewPaused = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         val content: View = findViewById(android.R.id.content)
 
         content.viewTreeObserver.addOnPreDrawListener {
-            return@addOnPreDrawListener !viewLoading
+            return@addOnPreDrawListener !webViewLoading
         }
 
         // Button binding
@@ -133,7 +129,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         println("onResume")
-        setFullscreen(fullscreen)
+        setFullscreen()
 
         if (Build.VERSION.SDK_INT <= 23) {
             resumeBgPlayer()
@@ -196,7 +192,7 @@ class MainActivity : AppCompatActivity() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             pushViewData("isPlaying", isPlaying.toString())
-            pushViewData("sleepTime", StorageHelper.load(Keys.SLEEP_TIMER, 0L).toString())
+            pushViewData("sleepTime", Settings.sleepTime.toString())
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -260,9 +256,9 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
 
-                if (viewError) {
+                if (webViewError) {
                     // Don't reload if webview paused
-                    if (viewPaused) {
+                    if (webViewPaused) {
                         return
                     }
 
@@ -273,12 +269,12 @@ class MainActivity : AppCompatActivity() {
                         view.reload()
                     }
                 } else {
-                    viewLoading = false
-                    pushViewData("isPlaying", controller?.isPlaying.toString())
-                    pushViewData("sleepTime", StorageHelper.load(Keys.SLEEP_TIMER, 0L).toString())
+                    webViewLoading = false
+                    pushViewData("isPlaying", Settings.isPlaying.toString())
+                    pushViewData("sleepTime", Settings.sleepTime.toString())
                 }
 
-                viewError = false
+                webViewError = false
             }
 
             override fun onReceivedError(
@@ -287,7 +283,7 @@ class MainActivity : AppCompatActivity() {
                 error: WebResourceError?
             ) {
                 super.onReceivedError(view, request, error)
-                viewError = true
+                webViewError = true
             }
         }
 
@@ -298,18 +294,19 @@ class MainActivity : AppCompatActivity() {
     private fun resumeWebView() {
         webView.onResume()
         webView.resumeTimers()
-        viewPaused = false
-        if (viewError) {
+        webViewPaused = false
+        if (webViewError) {
             webView.reload()
         }
-        pushViewData("isPlaying", controller?.isPlaying.toString())
+
+        pushViewData("isPlaying", Settings.isPlaying.toString())
     }
 
     private fun pauseWebView() {
-        if (viewError) {
+        if (webViewError) {
             webView.stopLoading()
         }
-        viewPaused = true
+        webViewPaused = true
         webView.onPause()
         webView.pauseTimers()
     }
@@ -387,13 +384,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun toggleFullscreen() {
-        fullscreen = !fullscreen
-        StorageHelper.save(Keys.FULLSCREEN, fullscreen)
-        setFullscreen(fullscreen)
+        Settings.fullScreen = !Settings.fullScreen
+        setFullscreen()
     }
 
-    private fun setFullscreen(fullscreen: Boolean) {
-        if (fullscreen) {
+    private fun setFullscreen() {
+        if (Settings.fullScreen) {
             WindowCompat.setDecorFitsSystemWindows(window, false)
             WindowInsetsControllerCompat(window, window.decorView.rootView).let { controller ->
                 controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -412,7 +408,7 @@ class MainActivity : AppCompatActivity() {
     private fun showWindow(view: View) {
         var window = view.tag.toString()
         if (window == "user-favorites" || window == "user") {
-            if (UserHelper.getToken().equals("")) {
+            if (Settings.userToken == "") {
                 window = "user-login"
             }
         }
@@ -421,8 +417,8 @@ class MainActivity : AppCompatActivity() {
         drawer?.closeDrawers()
     }
 
-    fun setAudioQuality(lowQuality: Int) {
-        val quality = if (lowQuality == 1) "LOW" else "HIGH"
+    fun setAudioQuality(lowQuality: Boolean) {
+        val quality = if (lowQuality) "LOW" else "HIGH"
         makeToast("Set audio quality to $quality. Please restart the playback.")
     }
 
@@ -441,7 +437,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val time: Long = if (minutes > 0) System.currentTimeMillis() + (minutes * 60 * 1000L) else 0
-        StorageHelper.save(Keys.SLEEP_TIMER, time)
+        Settings.sleepTime = time
         controller?.setSleepTimer()
     }
 

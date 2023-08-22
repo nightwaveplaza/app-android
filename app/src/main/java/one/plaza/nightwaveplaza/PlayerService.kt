@@ -6,8 +6,6 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Metadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
@@ -24,9 +22,7 @@ import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.ListenableFuture
-import okhttp3.internal.notify
 import one.plaza.nightwaveplaza.helpers.Keys
-import one.plaza.nightwaveplaza.helpers.StorageHelper
 
 // credit: https://codeberg.org/y20k/transistor/src/branch/master/app/src/main/java/org/y20k/transistor/PlayerService.kt
 @UnstableApi
@@ -61,8 +57,8 @@ class PlayerService : MediaLibraryService() {
     }
 
     private fun closePlayer() {
-//        StorageHelper.save(Keys.IS_PLAYING, false)
-        StorageHelper.save(Keys.SLEEP_TIMER, 0L)
+        Settings.isPlaying = false
+        Settings.sleepTime = 0L
         player.removeListener(playerListener)
         player.release()
         mediaLibrarySession.release()
@@ -183,7 +179,7 @@ class PlayerService : MediaLibraryService() {
     private var playerListener: Player.Listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-//            StorageHelper.save(Keys.IS_PLAYING, isPlaying)
+            Settings.isPlaying = isPlaying
         }
     }
 
@@ -202,32 +198,27 @@ class PlayerService : MediaLibraryService() {
         }
 
     fun setSleepTimer() {
-        val time = StorageHelper.load(Keys.SLEEP_TIMER, 0L)
+        val time = Settings.sleepTime
         if (::sleepTimer.isInitialized) {
-            println("timer cancel")
             sleepTimer.cancel()
         }
 
         if (time > 0) {
             sleepTimer = object : CountDownTimer(time - System.currentTimeMillis(), 1000) {
                 override fun onFinish() {
-                    println("timer finish")
                     // Check if finished and not cancelled
-                    val sleepTime = StorageHelper.load(Keys.SLEEP_TIMER, 0L)
+                    val sleepTime = Settings.sleepTime
                     if (sleepTime - System.currentTimeMillis() < 1000) {
                         if (player.isPlaying) {
                             player.stop() // todo: or pause
                         }
                     }
-                    StorageHelper.save(Keys.SLEEP_TIMER, 0L)
+                    Settings.sleepTime = 0L
                 }
 
-                override fun onTick(millisUntilFinished: Long) {
-                    println("timer tick")
-                }
+                override fun onTick(millisUntilFinished: Long) {}
             }
 
-            println("timer start")
             sleepTimer.start()
         }
     }

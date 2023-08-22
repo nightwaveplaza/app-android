@@ -9,8 +9,8 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.ListenableFuture
+import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.helpers.Keys
-import one.plaza.nightwaveplaza.helpers.StorageHelper
 
 
 fun MediaController.play(context: Context) {
@@ -22,8 +22,10 @@ fun MediaController.play(context: Context) {
 }
 
 fun prepareUri(): MediaItem {
-    val lowQuality = StorageHelper.load(Keys.AUDIO_QUALITY, 0) == 1
-    val streamUrl = if (lowQuality) Keys.URI_MP3 else Keys.URI_MP3_LOW
+    val uriMp3 = "https://radio.plaza.one/mp3"
+    val uriMp3Low = "https://radio.plaza.one/mp3_96"
+
+    val streamUrl = if (Settings.lowQualityAudio) uriMp3Low else uriMp3
 
     val requestMetadata = MediaItem.RequestMetadata.Builder().apply {
         setMediaUri(Uri.parse(streamUrl))
