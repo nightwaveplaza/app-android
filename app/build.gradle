@@ -70,11 +70,14 @@ dependencies {
 
 //    implementation "androidx.media:media:1.6.0"
     implementation "androidx.media3:media3-exoplayer:1.1.1"
-    implementation "androidx.media3:media3-exoplayer-hls:1.1.1"
+//    implementation "androidx.media3:media3-exoplayer-hls:1.1.1"
     implementation "androidx.media3:media3-session:1.1.1"
-    implementation 'androidx.media3:media3-ui:1.1.1'
+//    implementation 'androidx.media3:media3-ui:1.1.1'
 
     implementation 'com.google.code.gson:gson:2.10'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
     implementation 'androidx.webkit:webkit:1.7.0'
+
+    implementation 'com.facebook.fresco:fresco:3.0.0'
+    implementation 'com.facebook.fresco:animated-gif:3.0.0'
 }

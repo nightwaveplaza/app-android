@@ -5,7 +5,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -24,24 +23,15 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.database.StandaloneDatabaseProvider
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
-import androidx.media3.datasource.cache.SimpleCache
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
 import androidx.webkit.WebViewAssetLoader
+import com.facebook.drawee.backends.pipeline.Fresco
+import com.facebook.drawee.view.SimpleDraweeView
+import com.facebook.imagepipeline.request.ImageRequest
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -51,7 +41,6 @@ import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.helpers.JsonHelper
-import java.io.File
 import java.util.Locale
 
 
@@ -62,14 +51,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var controllerFuture: ListenableFuture<MediaController>
     private lateinit var activity: AppCompatActivity
     private lateinit var webView: WebView
-    private var bgPlayer: ExoPlayer? = null
-    private var bgPlayerCache: SimpleCache? = null
-    private var bgPlayerView: PlayerView? = null
+    private var bgPlayerView: SimpleDraweeView? = null
     private var drawer: DrawerLayout? = null
 
     private var webViewLoading = true
     private var webViewError = false
     private var webViewPaused = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,7 +85,6 @@ class MainActivity : AppCompatActivity() {
         bgPlayerView = findViewById(R.id.bg_view)
         drawer = findViewById(R.id.drawer)
 
-        initializeBgPlayer()
         initializeWebView()
         setupDrawer()
 
@@ -109,7 +96,6 @@ class MainActivity : AppCompatActivity() {
         initializeController()
         println("onStart")
         if (Build.VERSION.SDK_INT > 23) {
-            resumeBgPlayer()
             resumeWebView()
         }
     }
@@ -121,7 +107,6 @@ class MainActivity : AppCompatActivity() {
 
         // https://github.com/google/ExoPlayer/issues/4878
         if (Build.VERSION.SDK_INT > 23) {
-            pauseBgPlayer()
             pauseWebView()
         }
     }
@@ -132,7 +117,6 @@ class MainActivity : AppCompatActivity() {
         setFullscreen()
 
         if (Build.VERSION.SDK_INT <= 23) {
-            resumeBgPlayer()
             resumeWebView()
         }
     }
@@ -142,14 +126,12 @@ class MainActivity : AppCompatActivity() {
         println("onPause")
 
         if (Build.VERSION.SDK_INT <= 23) {
-            pauseBgPlayer()
             pauseWebView()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        releaseBgPlayer()
     }
 
     private fun setupDrawer() {
@@ -287,8 +269,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-//        webView.loadUrl("http://plaza.dev:4173/")
-        webView.loadUrl("https://m.plaza.one")
+        webView.loadUrl("http://plaza.dev:4173/")
+//        webView.loadUrl("https://m.plaza.one")
     }
 
     private fun resumeWebView() {
@@ -317,69 +299,14 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread { webView.evaluateJavascript(call, null) }
     }
 
-    private fun initializeBgPlayer() {
-        println("initializeBgPlayer")
-        if (bgPlayer == null) {
-            bgPlayer = ExoPlayer.Builder(this).build()
-            bgPlayer?.repeatMode = Player.REPEAT_MODE_ALL
-            bgPlayerView?.player = bgPlayer
-            bgPlayerView?.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-        }
-
-        if (bgPlayerCache == null) {
-            val cacheFolder = File(filesDir, "backs")
-            val cacheEvictor = LeastRecentlyUsedCacheEvictor(1024 * 1024 * 100)
-            bgPlayerCache = SimpleCache(cacheFolder, cacheEvictor, StandaloneDatabaseProvider(this))
-        }
-
-        bgPlayerView?.player?.playWhenReady = true
-    }
-
-    private fun releaseBgPlayer() {
-        println("releaseBgPlayer")
-        bgPlayerView?.player = null
-        bgPlayerCache?.release()
-        bgPlayerCache = null
-        bgPlayer?.release()
-        bgPlayer = null
-    }
-
-    private fun resumeBgPlayer() {
-        bgPlayerView?.onResume()
-        bgPlayerView?.player?.playWhenReady = true
-    }
-
-    private fun pauseBgPlayer() {
-        bgPlayerView?.onPause()
-        bgPlayerView?.player?.pause()
-    }
-
     fun setBackground(backgroundSrc: String) {
-        if (bgPlayer == null || bgPlayerCache == null) return
-
-        val uri: Uri? = if (backgroundSrc != "solid") {
-            Uri.parse(backgroundSrc)
+        if (backgroundSrc != "solid") {
+            bgPlayerView?.controller = Fresco.newDraweeControllerBuilder()
+                .setImageRequest(ImageRequest.fromUri(backgroundSrc))
+                .setAutoPlayAnimations(true)
+                .build()
         } else {
-            null
-        }
-
-        if (uri == null) {
-            bgPlayer!!.playWhenReady = false
-            bgPlayer!!.stop()
-            bgPlayer!!.seekTo(0)
-        } else {
-
-            val dsf: DataSource.Factory = DefaultDataSource.Factory(this)
-            val cacheDataSourceFactory: DataSource.Factory =
-                CacheDataSource.Factory().setCache(bgPlayerCache!!)
-                    .setUpstreamDataSourceFactory(dsf)
-            val videoSource: MediaSource =
-                ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-                    .createMediaSource(MediaItem.fromUri(uri))
-            bgPlayer!!.playWhenReady = false
-            bgPlayer!!.setMediaSource(videoSource)
-            bgPlayer!!.prepare()
-            bgPlayer!!.playWhenReady = true
+            bgPlayerView?.controller = null
         }
     }
 

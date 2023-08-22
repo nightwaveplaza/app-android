@@ -13,17 +13,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.media3.ui.PlayerView
+        <com.facebook.drawee.view.SimpleDraweeView
             android:id="@+id/bg_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#008080"
-            app:repeat_toggle_modes="none"
-            app:show_timeout="45000"
-            app:shutter_background_color="#008080"
-            app:surface_type="surface_view"
-            tools:viewBindingIgnore="true"
-            app:use_controller="false" />
+            android:background="#008080" />
 
         <WebView
             android:id="@+id/webview"
