@@ -8,6 +8,7 @@ object Settings {
     private const val USER_TOKEN = "UserToken"
     private const val FULLSCREEN = "Fullscreen"
     private const val AUDIO_LQ = "AudioLowQuality"
+    private const val VIEW_SRC_URI = "ViewVersion"
 
     var isPlaying: Boolean = false
         set(v) {
@@ -43,4 +44,11 @@ object Settings {
             field = v
         }
         get() = StorageHelper.load(AUDIO_LQ, false)
+
+    var viewUri: String = ""
+        set(v) {
+            StorageHelper.save(VIEW_SRC_URI, v)
+            field = v
+        }
+        get() = StorageHelper.load(VIEW_SRC_URI, "")
 }

@@ -3,18 +3,13 @@ package one.plaza.nightwaveplaza
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -28,19 +23,24 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.webkit.WebViewAssetLoader
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.facebook.drawee.view.SimpleDraweeView
 import com.facebook.imagepipeline.request.ImageRequest
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.helpers.JsonHelper
+import one.plaza.nightwaveplaza.ui.ViewClient
 import java.util.Locale
 
 
@@ -54,10 +54,9 @@ class MainActivity : AppCompatActivity() {
     private var bgPlayerView: SimpleDraweeView? = null
     private var drawer: DrawerLayout? = null
 
-    private var webViewLoading = true
-    private var webViewError = false
-    private var webViewPaused = false
-
+    var webViewLoaded = false
+    var webViewPaused = false
+    private var viewVersionJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         val content: View = findViewById(android.R.id.content)
 
         content.viewTreeObserver.addOnPreDrawListener {
-            return@addOnPreDrawListener !webViewLoading
+            return@addOnPreDrawListener webViewLoaded
         }
 
         // Button binding
@@ -86,9 +85,9 @@ class MainActivity : AppCompatActivity() {
         drawer = findViewById(R.id.drawer)
 
         initializeWebView()
-        setupDrawer()
+        loadWebView()
 
-        println(webView.isHardwareAccelerated)
+        setupDrawer()
     }
 
     override fun onStart() {
@@ -128,10 +127,6 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT <= 23) {
             pauseWebView()
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
     }
 
     private fun setupDrawer() {
@@ -198,99 +193,81 @@ class MainActivity : AppCompatActivity() {
         webSettings.javaScriptEnabled = true
         webSettings.textZoom = 100
         webSettings.domStorageEnabled = true
-        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         if (BuildConfig.DEBUG) {
+            webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
             WebView.setWebContentsDebuggingEnabled(true)
+        } else {
+            webSettings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
         }
 
-        val assetLoader: WebViewAssetLoader = WebViewAssetLoader.Builder()
-//            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
-//            .addPathHandler("/assets/",
-//                WebViewAssetLoader.InternalStoragePathHandler(this, File("$cacheDir/assets"))
-//            )
-//            .addPathHandler(
-//                "/artworks/",
-//                WebViewAssetLoader.InternalStoragePathHandler(this, File("$cacheDir/artworks"))
-//            )
-            .build()
-
-        webView.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(
-                view: WebView,
-                request: WebResourceRequest
-            ): WebResourceResponse? {
-                return assetLoader.shouldInterceptRequest(request.url)
-            }
-
-            override fun shouldOverrideUrlLoading(
-                view: WebView,
-                request: WebResourceRequest
-            ): Boolean {
-                val intent = Intent(Intent.ACTION_VIEW, request.url)
-                view.context.startActivity(intent)
-                return true
-            }
-
-            override fun onPageFinished(view: WebView, url: String) {
-                super.onPageFinished(view, url)
-
-                if (webViewError) {
-                    // Don't reload if webview paused
-                    if (webViewPaused) {
-                        return
-                    }
-
-                    // Show toast and try again
-                    makeToast(getString(R.string.no_internet))
-                    activity.lifecycleScope.launch {
-                        delay(5000)
-                        view.reload()
-                    }
-                } else {
-                    webViewLoading = false
-                    pushViewData("isPlaying", Settings.isPlaying.toString())
-                    pushViewData("sleepTime", Settings.sleepTime.toString())
-                }
-
-                webViewError = false
-            }
-
-            override fun onReceivedError(
-                view: WebView?,
-                request: WebResourceRequest?,
-                error: WebResourceError?
-            ) {
-                super.onReceivedError(view, request, error)
-                webViewError = true
-            }
-        }
-
-        webView.loadUrl("http://plaza.dev:4173/")
-//        webView.loadUrl("https://m.plaza.one")
+        webView.webViewClient = ViewClient(this)
     }
 
-    private fun resumeWebView() {
-        webView.onResume()
-        webView.resumeTimers()
-        webViewPaused = false
-        if (webViewError) {
-            webView.reload()
+    private fun loadWebView() {
+        if (viewVersionJob != null) {
+            return
         }
 
-        pushViewData("isPlaying", Settings.isPlaying.toString())
+        viewVersionJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.IO) {
+            val client = ApiClient()
+            var version: ApiClient.Version? = null
+
+            while (version == null && isActive) {
+                try {
+                    version = client.getVersion()
+                } catch (err: Exception) {
+                    runOnUiThread {
+                        makeToast(getString(R.string.no_internet))
+                    }
+                    delay(5000)
+                }
+            }
+
+            if (version == null) {
+                return@launch
+            }
+
+            runOnUiThread {
+                if (version.viewSrc != Settings.viewUri) {
+                    webView.clearCache(true)
+                    Settings.viewUri = version.viewSrc
+                }
+                webView.stopLoading()
+                webView.loadUrl(Settings.viewUri)
+            }
+        }
     }
 
     private fun pauseWebView() {
-        if (webViewError) {
+        if (!webViewLoaded) {
             webView.stopLoading()
+
+            if (viewVersionJob != null) {
+                viewVersionJob?.cancel()
+                viewVersionJob = null
+            }
         }
+
         webViewPaused = true
-        webView.onPause()
-        webView.pauseTimers()
+        if (webViewLoaded) {
+            webView.onPause()
+            webView.pauseTimers()
+        }
+    }
+
+    private fun resumeWebView() {
+        webViewPaused = false
+        if (webViewLoaded) {
+            webView.onResume()
+            webView.resumeTimers()
+            pushViewData("isPlaying", Settings.isPlaying.toString())
+        } else {
+            loadWebView()
+        }
     }
 
     fun pushViewData(action: String, payload: String) {

@@ -9,6 +9,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.IOException
+import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.helpers.Utils
 
 class ApiClient {
@@ -29,6 +30,14 @@ class ApiClient {
         var artworkSrc: String = "",
         var reactions: Int = 0,
         var updatedAt: Long = 0L
+    )
+
+    @Keep data class Version(
+        var viewVersion: Int = 0,
+        var androidMinVersion: Int = 0,
+        var iOsMinVersion: Int = 0,
+        @SerializedName("view_src")
+        var viewSrc: String = ""
     )
 
     private val baseUrl = "https://api.plaza.one/"
@@ -73,4 +82,28 @@ class ApiClient {
             throw Exception("Status parse error")
         }
     }
+
+    @Throws(Exception::class)
+    fun getVersion(): Version {
+        val request: Request = Request.Builder().url("$baseUrl/versions/?platform=android&app_ver=" + BuildConfig.VERSION_CODE).build()
+        var resp: String?
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    throw Exception("Network error:" + " ${response.code} ${response.message}")
+                }
+                resp = response.body?.string()
+            }
+        } catch (err: IOException) {
+            throw Exception("Network exception")
+        }
+
+        try {
+            return Gson().fromJson(resp, Version::class.java)
+        } catch (err: JsonSyntaxException) {
+            throw Exception("Status parse error")
+        }
+    }
+
+
 }
