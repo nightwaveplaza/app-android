@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Load acra local properties
+Properties acraProperties = new Properties()
+if (project.rootProject.file('acra.properties').canRead()) {
+    acraProperties.load(project.rootProject.file("acra.properties").newDataInputStream())
+}
+
 android {
     namespace 'one.plaza.nightwaveplaza'
     compileSdk 34
@@ -27,19 +33,28 @@ android {
         release {
             minifyEnabled true
             shrinkResources = true
+
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            buildConfigField 'String', 'ACRA_URI', acraProperties.getProperty('ACRA_URI', '""')
+            buildConfigField 'String', 'ACRA_USER', acraProperties.getProperty('ACRA_USER', '""')
+            buildConfigField 'String', 'ACRA_PASS', acraProperties.getProperty('ACRA_PASS', '""')
         }
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            buildConfigField 'String', 'ACRA_URI', acraProperties.getProperty('ACRA_URI', '""')
+            buildConfigField 'String', 'ACRA_USER', acraProperties.getProperty('ACRA_USER', '""')
+            buildConfigField 'String', 'ACRA_PASS', acraProperties.getProperty('ACRA_PASS', '""')
         }
     }
     buildFeatures {
         viewBinding true
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     kotlinOptions {
         jvmTarget = '1.8'
@@ -80,4 +95,6 @@ dependencies {
 
     implementation 'com.facebook.fresco:fresco:3.0.0'
     implementation 'com.facebook.fresco:animated-gif:3.0.0'
+
+    implementation("ch.acra:acra-http:5.11.1")
 }
