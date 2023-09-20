@@ -21,11 +21,10 @@ class NightwavePlaza : Application() {
                 buildConfigClass = BuildConfig::class.java
                 reportFormat = StringFormat.JSON
 
-
                 httpSender {
-                    uri = "https://acra.plaza.one/report"
-                    basicAuthLogin = "cEPWFhhJCQNoRRSu"
-                    basicAuthPassword = "gxezd2UjZ7aNuKj7"
+                    uri = BuildConfig.ACRA_URI
+                    basicAuthLogin = BuildConfig.ACRA_LOGIN
+                    basicAuthPassword = BuildConfig.ACRA_PASS
                     httpMethod = HttpSender.Method.POST
                 }
             }
