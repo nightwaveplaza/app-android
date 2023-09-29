@@ -93,8 +93,9 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
     implementation 'androidx.webkit:webkit:1.8.0'
 
-    implementation 'com.facebook.fresco:fresco:3.0.0'
-    implementation 'com.facebook.fresco:animated-gif:3.0.0'
+    implementation 'com.facebook.fresco:fresco:3.1.0'
+    implementation 'com.facebook.fresco:animated-gif:3.1.0'
+    implementation 'com.facebook.fresco:nativeimagetranscoder3:3.1.0'
 
     implementation("ch.acra:acra-http:5.11.1")
 }
