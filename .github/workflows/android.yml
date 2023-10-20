@@ -41,17 +41,29 @@ jobs:
           ./gradlew assembleRelease --stacktrace
           ./gradlew bundleRelease
 
+      - name : Retrieve Version
+        run: |
+          echo "::set-output name=VERSION_NAME::$(${{github.workspace}}/gradlew -q printVersionName)"
+        id: app_version
+
+      - name: Get version
+        run: |
+          echo "version_name=${{steps.android_version.outputs.VERSION_NAME}}" >> $GITHUB_ENV
+
+      - name: Rename release file
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-$env.version_name.apk
+
       - uses: actions/upload-artifact@v2
         with:
           name: Upload app-release.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/release/NightwavePlaza-$env.version_name.apk
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: Release ${{ github.event.inputs.version }}
-          files: app/build/outputs/apk/release/app-release.apk
+          files: app/build/outputs/apk/release/NightwavePlaza-$env.version_name.apk
           draft: false
           prerelease: false
         env:
