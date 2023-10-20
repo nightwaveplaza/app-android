@@ -28,6 +28,7 @@ jobs:
 
       - name: Retrieve Version
         run: |
+          chmod +x gradlew
           echo "version_name=$(${{github.workspace}}/gradlew -q printVersionName)" >> $GITHUB_ENV
 
       - name: Check for Tag
@@ -46,7 +47,6 @@ jobs:
 
       - name: Build release artifacts
         run: |
-          chmod +x gradlew
           ./gradlew assembleRelease --stacktrace
           ./gradlew bundleRelease
 
