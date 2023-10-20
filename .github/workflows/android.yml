@@ -37,6 +37,7 @@ jobs:
 
       - name: Build release artifacts
         run: |
+          chmod +x gradlew
           ./gradlew assembleRelease --stacktrace
           ./gradlew bundleRelease
 
