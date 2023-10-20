@@ -46,9 +46,3 @@ fun prepareUri(): MediaItem {
 fun MediaController.setSleepTimer() {
     sendCustomCommand(SessionCommand(Keys.SET_TIMER, Bundle.EMPTY), Bundle.EMPTY)
 }
-
-
-/* Request sleep timer remaining */
-fun MediaController.requestSleepTimerRemaining(): ListenableFuture<SessionResult> {
-    return sendCustomCommand(SessionCommand(Keys.TIMER_REMAINING, Bundle.EMPTY), Bundle.EMPTY)
-}
