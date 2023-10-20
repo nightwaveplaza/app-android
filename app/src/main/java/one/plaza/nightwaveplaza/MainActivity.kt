@@ -10,6 +10,7 @@ import android.view.View
 import android.view.WindowInsets
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -17,15 +18,12 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.facebook.drawee.backends.pipeline.Fresco
-import com.facebook.drawee.view.SimpleDraweeView
-import com.facebook.imagepipeline.request.ImageRequest
+import com.bumptech.glide.Glide
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -51,7 +49,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var controllerFuture: ListenableFuture<MediaController>
     private lateinit var activity: AppCompatActivity
     private lateinit var webView: WebView
-    private var bgPlayerView: SimpleDraweeView? = null
+    private var bgPlayerView: ImageView? = null
     private var drawer: DrawerLayout? = null
 
     var webViewLoaded = false
@@ -278,12 +276,9 @@ class MainActivity : AppCompatActivity() {
 
     fun setBackground(backgroundSrc: String) {
         if (backgroundSrc != "solid") {
-            bgPlayerView?.controller = Fresco.newDraweeControllerBuilder()
-                .setImageRequest(ImageRequest.fromUri(backgroundSrc))
-                .setAutoPlayAnimations(true)
-                .build()
+            Glide.with(this).load(backgroundSrc).fitCenter().into(bgPlayerView!!)
         } else {
-            bgPlayerView?.controller = null
+            Glide.with(this).clear(bgPlayerView!!)
         }
     }
 
