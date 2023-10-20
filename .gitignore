@@ -35,5 +35,5 @@ google-services.json
 # Android Profiling
 *.hprof
 
-# App view
-app/src/main/assets/app/*
+# Acra properties
+acra.properties

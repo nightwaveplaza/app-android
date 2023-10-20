@@ -14,9 +14,10 @@
     <!-- Notifications -->
     <string name="notification_channel_name">Nightwave Plaza controls</string>
     <string name="notification_channel_desc">Play, pause, like.</string>
-    <!-- idk wtf are these -->
+    <string name="no_internet">Sorry, we\'re unable to connect you to our services. Retrying…</string>
+
+    <!-- default text -->
     <string name="button_icon">Button icon</string>
     <string name="button_text">Button text</string>
-
 
 </resources>
