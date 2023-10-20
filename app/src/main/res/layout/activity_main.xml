@@ -13,12 +13,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.facebook.drawee.view.SimpleDraweeView
+        <ImageView
             android:id="@+id/bg_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:scaleType="centerCrop"
             android:background="#008080"
-            fresco:placeholderImage="@color/splash_bg"
+            android:contentDescription="@string/background_image"
         />
 
         <WebView

@@ -19,5 +19,6 @@
     <!-- default text -->
     <string name="button_icon">Button icon</string>
     <string name="button_text">Button text</string>
+    <string name="background_image">Background image</string>
 
 </resources>

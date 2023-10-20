@@ -1,7 +1,6 @@
 package one.plaza.nightwaveplaza
 
 import android.app.Application
-import com.facebook.drawee.backends.pipeline.Fresco
 import one.plaza.nightwaveplaza.helpers.StorageHelper.initStorage
 import org.acra.config.httpSender
 import org.acra.data.StringFormat
@@ -13,7 +12,6 @@ class NightwavePlaza : Application() {
     /* Implements onCreate */
     override fun onCreate() {
         super.onCreate()
-        Fresco.initialize(this)
         initStorage()
 
         if (BuildConfig.ACRA_URI.isNotEmpty()) {
