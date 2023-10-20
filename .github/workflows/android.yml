@@ -30,20 +30,12 @@ jobs:
         run: |
           echo "version_name=$(${{github.workspace}}/gradlew -q printVersionName)" >> $GITHUB_ENV
 
-      - name: Check tag
-        uses: actions/checkout@v2
       - name: Check for Tag
         run: |
-          TAG="0.1"
-          if [ $(git tag -l "v${version_name}") ]; then
-            echo "Tag v${version_name} already exist"
+          if [ $(git tag -l "v$version_name") ]; then
+            echo "Tag v$version_name already exist"
             exit 1
           fi
-
-      - uses: mukunku/tag-exists-action@v1.4.0
-        id: checkTag
-        with:
-          tag: v${{ env.version_name }}
 
       - name: Checkout keystore repo
         uses: actions/checkout@v2
