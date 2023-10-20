@@ -51,14 +51,14 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: Upload artifact
-          path: app/build/outputs/apk/release/NightwavePlaza-$version_name.apk
+          path: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ env.version_name }}
           name: Release ${{ env.version_name }}
-          files: app/build/outputs/apk/release/NightwavePlaza-$version_name.apk
+          files: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
           draft: false
           prerelease: false
         env:
