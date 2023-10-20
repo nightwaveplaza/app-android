@@ -6,12 +6,9 @@ env:
   RELEASE_SIGN_KEY_PASSWORD: ${{ secrets.RELEASE_SIGN_KEY_PASSWORD }}
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Application version'
-        required: true
-        default: '1.0'
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -28,6 +25,25 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Retrieve Version
+        run: |
+          echo "version_name=$(${{github.workspace}}/gradlew -q printVersionName)" >> $GITHUB_ENV
+
+      - name: Check tag
+        uses: actions/checkout@v2
+      - name: Check for Tag
+        run: |
+          TAG="0.1"
+          if [ $(git tag -l "v${version_name}") ]; then
+            echo "Tag v${version_name} already exist"
+            exit 1
+          fi
+
+      - uses: mukunku/tag-exists-action@v1.4.0
+        id: checkTag
+        with:
+          tag: v${{ env.version_name }}
+
       - name: Checkout keystore repo
         uses: actions/checkout@v2
         with:
@@ -40,10 +56,6 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --stacktrace
           ./gradlew bundleRelease
-
-      - name: Retrieve Version
-        run: |
-          echo "version_name=$(${{github.workspace}}/gradlew -q printVersionName)" >> $GITHUB_ENV
 
       - name: Rename release file
         run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-$version_name.apk
