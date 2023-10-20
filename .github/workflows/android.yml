@@ -51,7 +51,7 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.version }}
           name: Release ${{ github.event.inputs.version }}
-          files: ${{ env.SIGNED_RELEASE_FILE }}
+          files: app/build/outputs/apk/release/app-release.apk
           draft: false
           prerelease: false
         env:
