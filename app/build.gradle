@@ -110,3 +110,7 @@ dependencies {
 
     implementation 'ch.acra:acra-http:5.11.2'
 }
+
+tasks.register('printVersionName') {
+    println (android.defaultConfig.versionName + "-b" + android.defaultConfig.versionCode)
+}
