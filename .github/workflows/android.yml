@@ -43,8 +43,8 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: Signed app bundle
-          path: ${{steps.sign_app.outputs.signedReleaseFile}}
+          name: Upload app-release.apk
+          path: app/build/outputs/apk/release/app-release.apk
 
       - name: Create release
         uses: softprops/action-gh-release@v1
