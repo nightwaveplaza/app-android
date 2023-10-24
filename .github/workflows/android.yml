@@ -48,6 +48,14 @@ jobs:
           token: ${{ secrets.KEYSTORE_ACCESS_TOKEN }}
           path: app/keystore
 
+      - name: Fill ACRA credentials
+        env:
+          ACRA_URI: ${{ secrets.ACRA_URI }}
+          ACRA_LOGIN: ${{ secrets.ACRA_LOGIN }}
+          ACRA_PASS: ${{ secrets.ACRA_PASS }}
+        run: |
+          echo -e "ACRA_URI=$ACRA_URI\nACRA_LOGIN=$ACRA_LOGIN\nACRA_PASS=$ACRA_PASS" > acra.properties
+
       - name: Build release artifacts
         run: |
           ./gradlew assembleRelease --stacktrace
