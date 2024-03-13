@@ -206,6 +206,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWebView() {
+//        if (BuildConfig.DEBUG) {
+//            webView.loadUrl("http://plaza.dev:4173")
+//            return
+//        }
+
         if (viewVersionJob != null) {
             return
         }

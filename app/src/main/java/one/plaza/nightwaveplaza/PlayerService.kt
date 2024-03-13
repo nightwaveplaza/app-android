@@ -81,7 +81,7 @@ class PlayerService : MediaLibraryService() {
     }
 
     private fun initializeSession() {
-        val intent = Intent(this, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val intent = Intent(applicationContext, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
 //        val pendingIntent = TaskStackBuilder.create(this).run {
 //            addNextIntent(intent)
 //            getPendingIntent(1422, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
