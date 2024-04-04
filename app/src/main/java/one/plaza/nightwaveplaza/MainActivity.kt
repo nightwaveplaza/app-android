@@ -1,17 +1,21 @@
 package one.plaza.nightwaveplaza
 
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
+import android.view.WindowManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
@@ -86,6 +90,8 @@ class MainActivity : AppCompatActivity() {
         loadWebView()
 
         setupDrawer()
+        allowOnLockScreen()
+        setBackButtonCallback()
     }
 
     override fun onStart() {
@@ -193,7 +199,7 @@ class MainActivity : AppCompatActivity() {
         webSettings.domStorageEnabled = true
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
         if (BuildConfig.DEBUG) {
             webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
@@ -206,10 +212,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWebView() {
-//        if (BuildConfig.DEBUG) {
-//            webView.loadUrl("http://plaza.dev:4173")
-//            return
-//        }
+        if (BuildConfig.DEBUG) {
+            webView.loadUrl("http://plaza.local:4173")
+            return
+        }
 
         if (viewVersionJob != null) {
             return
@@ -311,11 +317,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun showWindow(view: View) {
         var window = view.tag.toString()
-        if (window == "user-favorites" || window == "user") {
-            if (Settings.userToken == "") {
-                window = "user-login"
-            }
-        }
         window = JsonHelper.windowName(window)
         pushViewData("openWindow", window)
         drawer?.closeDrawers()
@@ -347,5 +348,31 @@ class MainActivity : AppCompatActivity() {
 
     fun openDrawer() {
         drawer?.openDrawer(GravityCompat.START)
+    }
+
+    private fun allowOnLockScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            this.window.addFlags(
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+    }
+
+    private fun setBackButtonCallback() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val a = Intent(Intent.ACTION_MAIN)
+                a.addCategory(Intent.CATEGORY_HOME)
+                a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(a)
+            }
+        })
     }
 }

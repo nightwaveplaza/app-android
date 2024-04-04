@@ -10,17 +10,23 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.MainActivity
 import one.plaza.nightwaveplaza.R
 import one.plaza.nightwaveplaza.Settings
 
-@UnstableApi class ViewClient(private var activity: MainActivity): WebViewClient() {
+@UnstableApi
+class ViewClient(private var activity: MainActivity) : WebViewClient() {
     private var loadError = false
 
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest
     ): Boolean {
+        if (BuildConfig.DEBUG) {
+            return false
+        }
+
         return if (!request.url.toString().startsWith("https://m.plaza.one")) {
             val intent = Intent(Intent.ACTION_VIEW, request.url)
             view.context.startActivity(intent)

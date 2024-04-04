@@ -43,19 +43,6 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun getAuthToken(): String {
-        return Settings.userToken
-    }
-
-    @JavascriptInterface
-    fun setAuthToken(token: String) {
-//        if (token.isEmpty()) {
-//            activity.pushViewData("reactionUpdate", Reaction.getAsJson(mActivity))
-//        }
-        Settings.userToken = token
-    }
-
-    @JavascriptInterface
     fun getUserAgent(): String {
         return Utils.getUserAgent()
     }
@@ -78,5 +65,15 @@ class WebAppInterface(private val activity: MainActivity) {
         activity.runOnUiThread {
             activity.setSleepTimer(minutes)
         }
+    }
+
+    @JavascriptInterface
+    fun getAuthToken(): String {
+        return Settings.userToken
+    }
+
+    @JavascriptInterface
+    fun setAuthToken(token: String) {
+        Settings.userToken = token
     }
 }
