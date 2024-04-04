@@ -17,8 +17,8 @@ android {
         applicationId 'one.plaza.nightwaveplaza'
         minSdk 21
         targetSdk 34
-        versionCode 215
-        versionName '2.0.3'
+        versionCode 217
+        versionName '2.0.4'
 
         buildFeatures {
             buildConfig true
@@ -45,11 +45,15 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
             shrinkResources true
             signingConfig signingConfigs.release
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-
+            postprocessing {
+                removeUnusedCode true
+                obfuscate false
+                optimizeCode true
+            }
+            //minifyEnabled true
+            //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             minifyEnabled false
