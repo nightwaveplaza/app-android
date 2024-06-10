@@ -41,7 +41,6 @@ import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
-import one.plaza.nightwaveplaza.helpers.JsonHelper
 import one.plaza.nightwaveplaza.ui.ViewClient
 import java.util.Locale
 
