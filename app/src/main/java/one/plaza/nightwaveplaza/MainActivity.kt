@@ -280,8 +280,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun pushViewData(action: String, payload: String) {
-        println("pushViewData: $payload")
-        val call = "window['plaza'].push('$action', $payload)"
+        val call = "window['emitter'].emit('$action', $payload)"
         runOnUiThread { webView.evaluateJavascript(call, null) }
     }
 
@@ -316,9 +315,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showWindow(view: View) {
-        var window = view.tag.toString()
-        window = JsonHelper.windowName(window)
-        pushViewData("openWindow", window)
+        val window = view.tag.toString()
+        pushViewData("openWindow", String.format("'%s'", window))
         drawer?.closeDrawers()
     }
 
