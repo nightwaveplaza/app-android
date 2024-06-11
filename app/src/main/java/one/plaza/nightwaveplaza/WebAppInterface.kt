@@ -1,8 +1,11 @@
 package one.plaza.nightwaveplaza
 
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
 import one.plaza.nightwaveplaza.helpers.Utils
+
 
 @UnstableApi
 class WebAppInterface(private val activity: MainActivity) {
@@ -67,5 +70,16 @@ class WebAppInterface(private val activity: MainActivity) {
     @JavascriptInterface
     fun setAuthToken(token: String) {
         Settings.userToken = token
+    }
+
+    @JavascriptInterface
+    fun getAppVersion(): String {
+        try {
+            val pInfo: PackageInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
+            return pInfo.versionName + " (build " + pInfo.versionCode + ")"
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            return "Error"
+        }
     }
 }
