@@ -55,9 +55,6 @@ class WebAppInterface(private val activity: MainActivity) {
     @JavascriptInterface
     fun setAudioQuality(lowQuality: Boolean) {
         Settings.lowQualityAudio = lowQuality
-        activity.runOnUiThread {
-            activity.setAudioQuality(lowQuality)
-        }
     }
 
     @JavascriptInterface

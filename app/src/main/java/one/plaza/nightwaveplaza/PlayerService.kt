@@ -35,6 +35,7 @@ import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.helpers.Keys
 import one.plaza.nightwaveplaza.helpers.Utils
 
+
 @UnstableApi
 class PlayerService : MediaLibraryService() {
 
@@ -89,7 +90,6 @@ class PlayerService : MediaLibraryService() {
         }.build()
         //exoPlayer.addAnalyticsListener(analyticsListener)
         exoPlayer.addListener(playerListener)
-        exoPlayer.trackSelector
 
         if (Settings.lowQualityAudio) {
             exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters

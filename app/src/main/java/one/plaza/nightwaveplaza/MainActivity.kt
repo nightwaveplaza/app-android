@@ -319,11 +319,6 @@ class MainActivity : AppCompatActivity() {
         drawer?.closeDrawers()
     }
 
-    fun setAudioQuality(lowQuality: Boolean) {
-        val quality = if (lowQuality) "LOW" else "HIGH"
-        makeToast("Set audio quality to $quality. Please restart the playback.")
-    }
-
     private var toast: Toast? = null
     fun makeToast(msg: String) {
         toast?.cancel()
