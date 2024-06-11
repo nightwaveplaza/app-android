@@ -327,12 +327,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setSleepTimer(minutes: Int) {
-        if (minutes == 0) {
-            makeToast(getString(R.string.timer_disabled))
-        } else {
-            makeToast(String.format(Locale.US, getString(R.string.timer_start), minutes))
-        }
-
         val time: Long = if (minutes > 0) System.currentTimeMillis() + (minutes * 60 * 1000L) else 0
         Settings.sleepTime = time
         controller?.setSleepTimer()
