@@ -6,17 +6,8 @@ import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
 import one.plaza.nightwaveplaza.helpers.Utils
 
-
 @UnstableApi
 class WebAppInterface(private val activity: MainActivity) {
-
-    @JavascriptInterface
-    fun showToast(message: String) {
-        activity.runOnUiThread {
-            activity.makeToast(message)
-        }
-    }
-
     @JavascriptInterface
     fun openDrawer() {
         activity.runOnUiThread {
