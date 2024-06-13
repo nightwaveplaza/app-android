@@ -372,7 +372,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        println("ZHOPA " + lang + Settings.language)
         Settings.language = lang
 
         // As locale triggers activity lifecycle, set webview as not loaded
