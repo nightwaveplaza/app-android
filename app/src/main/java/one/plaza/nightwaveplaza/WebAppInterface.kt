@@ -73,4 +73,11 @@ class WebAppInterface(private val activity: MainActivity) {
             return "Error"
         }
     }
+
+    @JavascriptInterface
+    fun setLanguage(lang: String) {
+        activity.runOnUiThread {
+            activity.setLanguage(lang)
+        }
+    }
 }

@@ -2,12 +2,14 @@ package one.plaza.nightwaveplaza
 
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
+import android.app.LocaleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -17,6 +19,8 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -42,6 +46,7 @@ import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.ui.ViewClient
+import java.util.Locale
 
 
 @UnstableApi
@@ -359,5 +364,27 @@ class MainActivity : AppCompatActivity() {
                 startActivity(a)
             }
         })
+    }
+
+    fun setLanguage(lang: String) {
+        // Don't react to change to the same language
+        if (Settings.language == Locale(lang).language) {
+            return
+        }
+
+        println("ZHOPA " + lang + Settings.language)
+        Settings.language = lang
+
+        // As locale triggers activity lifecycle, set webview as not loaded
+        webViewLoaded = false
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getSystemService(LocaleManager::class.java)
+                .applicationLocales = LocaleList.forLanguageTags(lang)
+        } else {
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(lang)
+            )
+        }
     }
 }
