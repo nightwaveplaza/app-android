@@ -47,9 +47,9 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
-    fun setSleepTimer(minutes: Int) {
+    fun setSleepTimer(timestamp: Long) {
         activity.runOnUiThread {
-            activity.setSleepTimer(minutes)
+            activity.setSleepTimer(timestamp)
         }
     }
 

@@ -42,7 +42,6 @@ import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.ui.ViewClient
-import java.util.Locale
 
 
 @UnstableApi
@@ -326,8 +325,8 @@ class MainActivity : AppCompatActivity() {
         toast?.show()
     }
 
-    fun setSleepTimer(minutes: Int) {
-        val time: Long = if (minutes > 0) System.currentTimeMillis() + (minutes * 60 * 1000L) else 0
+    fun setSleepTimer(sleepTime: Long) {
+        val time: Long = if (sleepTime > 0) sleepTime else 0
         Settings.sleepTime = time
         controller?.setSleepTimer()
     }
