@@ -1,2 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="my_profile">Perfil</string>
+    <string name="settings">Configurações</string>
+    <string name="about">Sobre</string>
+    <string name="support">Apoie-nos</string>
+    <string name="history">Histórico</string>
+    <string name="no_internet">Perdão, tivemos um problema ao te conectar ao nosso servidor. Aguarde…</string>
+    <string name="my_likes">Favoritas</string>
+    <string name="ratings">Mais Populares</string>
+</resources>
