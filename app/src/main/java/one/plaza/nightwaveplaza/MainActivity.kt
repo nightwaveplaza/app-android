@@ -215,10 +215,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWebView() {
-        if (BuildConfig.DEBUG) {
-            webView.loadUrl("http://plaza.local:4173")
-            return
-        }
+//        if (BuildConfig.DEBUG) {
+//            webView.loadUrl("http://plaza.local:4173")
+//            return
+//        }
 
         if (viewVersionJob != null) {
             return
@@ -368,21 +368,30 @@ class MainActivity : AppCompatActivity() {
 
     fun setLanguage(lang: String) {
         // Don't react to change to the same language
-        if (Settings.language == Locale(lang).language) {
+        val loc: Locale = if (lang.contains('-')) {
+            Locale(
+                lang.substring(0, lang.indexOf('-')),
+                lang.substring(lang.indexOf('-') + 1, lang.length)
+            )
+        } else {
+            Locale(lang)
+        }
+
+        if (Settings.language == loc.language) {
             return
         }
 
-        Settings.language = lang
+        Settings.language = loc.language
 
         // As locale triggers activity lifecycle, set webview as not loaded
         webViewLoaded = false
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             getSystemService(LocaleManager::class.java)
-                .applicationLocales = LocaleList.forLanguageTags(lang)
+                .applicationLocales = LocaleList.forLanguageTags(loc.language)
         } else {
             AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(lang)
+                LocaleListCompat.forLanguageTags(loc.language)
             )
         }
     }
