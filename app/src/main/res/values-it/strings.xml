@@ -5,7 +5,7 @@
     <string name="my_profile">Profilo</string>
     <string name="settings">Impostazioni</string>
     <string name="support">Supportaci</string>
-    <string name="history">Riproduci Cronologia</string>
+    <string name="history">Cronologia</string>
     <string name="no_internet">Ops, non riusciamo a connetterti ai nostri servizi. Stiamo riprovando…</string>
     <string name="about">Chi siamo</string>
 </resources>
