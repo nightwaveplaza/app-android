@@ -92,7 +92,8 @@ class MainActivity : AppCompatActivity() {
         loadWebView()
 
         setupDrawer()
-        allowOnLockScreen()
+        // temporary disabled due memory leaks
+        //allowOnLockScreen()
         setBackButtonCallback()
     }
 
