@@ -43,8 +43,14 @@ class PlayerService : MediaLibraryService() {
     private lateinit var mediaLibrarySession: MediaLibrarySession
     private lateinit var sleepTimer: CountDownTimer
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession {
-        return mediaLibrarySession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
+        return mediaLibrarySession.takeUnless { session ->
+            session.invokeIsReleased
+        }.also {
+            if (it == null) {
+                println("onGetSession returns null because the session is already released")
+            }
+        }
     }
 
     override fun onCreate() {
@@ -63,8 +69,12 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent) {
-        closePlayer()
-        stopSelf()
+        super.onTaskRemoved(rootIntent)
+        // https://github.com/androidx/media/issues/167#issuecomment-1615184728
+        if (!player.playWhenReady) {
+            closePlayer()
+            stopSelf()
+        }
     }
 
     private fun closePlayer() {
@@ -301,3 +311,15 @@ class PlayerService : MediaLibraryService() {
         return fwPlayer
     }
 }
+
+private val MediaSession.invokeIsReleased: Boolean
+    get() = try {
+        // temporarily checked to debug
+        // https://github.com/androidx/media/issues/422
+        MediaSession::class.java.getDeclaredMethod("isReleased")
+            .apply { isAccessible = true }
+            .invoke(this) as Boolean
+    } catch (e: Exception) {
+        println("Couldn't check if it's released")
+        false
+    }
