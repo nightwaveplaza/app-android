@@ -124,7 +124,7 @@ class PlayerService : MediaLibraryService() {
         // This intent doesn't restart the activity
         val pendingIntent = PendingIntent.getActivity(
             this,
-            1422,
+            0,
             intent,
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

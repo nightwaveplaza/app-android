@@ -21,6 +21,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -59,19 +60,17 @@ class MainActivity : AppCompatActivity() {
     private var bgPlayerView: ImageView? = null
     private var drawer: DrawerLayout? = null
 
-    var webViewLoaded = false
-    var webViewPaused = false
+    private var webViewLoaded = false
     private var viewVersionJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activity = this
 
-        // Splash delay until page loaded
-        val content: View = findViewById(android.R.id.content)
-
-        content.viewTreeObserver.addOnPreDrawListener {
-            return@addOnPreDrawListener webViewLoaded
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                !webViewLoaded
+            }
         }
 
         // Button binding
@@ -101,7 +100,18 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
         initializeController()
         println("onStart")
+
         if (Build.VERSION.SDK_INT > 23) {
+            resumeWebView()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        println("onResume")
+        setFullscreen()
+
+        if (Build.VERSION.SDK_INT <= 23) {
             resumeWebView()
         }
     }
@@ -114,16 +124,6 @@ class MainActivity : AppCompatActivity() {
         // https://github.com/google/ExoPlayer/issues/4878
         if (Build.VERSION.SDK_INT > 23) {
             pauseWebView()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        println("onResume")
-        setFullscreen()
-
-        if (Build.VERSION.SDK_INT <= 23) {
-            resumeWebView()
         }
     }
 
@@ -181,7 +181,6 @@ class MainActivity : AppCompatActivity() {
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             super.onPlayWhenReadyChanged(playWhenReady, reason)
-            println(controller?.isPlaying)
             if (playWhenReady && controller?.isPlaying == false) {
                 pushViewData("isBuffering", "true")
             }
@@ -220,7 +219,7 @@ class MainActivity : AppCompatActivity() {
 //            return
 //        }
 
-        if (viewVersionJob != null) {
+        if (viewVersionJob != null && viewVersionJob!!.isActive) {
             return
         }
 
@@ -264,7 +263,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webViewPaused = true
+        //webViewPaused = true
         if (webViewLoaded) {
             webView.onPause()
             webView.pauseTimers()
@@ -272,18 +271,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resumeWebView() {
-        webViewPaused = false
+        //webViewPaused = false
+        webView.onResume()
+        webView.resumeTimers()
+
         if (webViewLoaded) {
-            webView.onResume()
-            webView.resumeTimers()
-            pushViewData("isPlaying", Settings.isPlaying.toString())
+            if (controller != null) {
+                pushViewData("isPlaying", controller!!.isPlaying.toString())
+            }
         } else {
             loadWebView()
         }
     }
 
+    fun onWebViewLoaded() {
+        webViewLoaded = true
+        if (controller != null) {
+            pushViewData("isPlaying", controller!!.isPlaying.toString())
+        }
+        pushViewData("sleepTime", Settings.sleepTime.toString())
+    }
+
     fun pushViewData(action: String, payload: String) {
         val call = "window['emitter'].emit('$action', $payload)"
+        println(call)
         runOnUiThread { webView.evaluateJavascript(call, null) }
     }
 
