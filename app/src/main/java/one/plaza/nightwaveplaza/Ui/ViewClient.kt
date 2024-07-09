@@ -3,7 +3,6 @@ package one.plaza.nightwaveplaza.ui
 import android.content.Intent
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.lifecycle.lifecycleScope
@@ -13,7 +12,6 @@ import kotlinx.coroutines.launch
 import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.MainActivity
 import one.plaza.nightwaveplaza.R
-import one.plaza.nightwaveplaza.Settings
 
 @UnstableApi
 class ViewClient(private var activity: MainActivity) : WebViewClient() {
@@ -41,9 +39,9 @@ class ViewClient(private var activity: MainActivity) : WebViewClient() {
 
         if (loadError) {
             // Don't reload if web view paused
-            if (activity.webViewPaused) {
-                return
-            }
+//            if (activity.webViewPaused) {
+//                return
+//            }
 
             // Show toast and try again
             activity.makeToast(activity.getString(R.string.no_internet))
@@ -52,9 +50,7 @@ class ViewClient(private var activity: MainActivity) : WebViewClient() {
                 view.reload()
             }
         } else {
-            activity.webViewLoaded = true
-            activity.pushViewData("isPlaying", Settings.isPlaying.toString())
-            activity.pushViewData("sleepTime", Settings.sleepTime.toString())
+            activity.onWebViewLoaded()
         }
     }
 
