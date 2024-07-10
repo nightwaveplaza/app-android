@@ -1,2 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="my_profile">El meu perfil</string>
+    <string name="settings">Configuració</string>
+    <string name="about">Sobre</string>
+    <string name="support">Ajudeu-nos</string>
+    <string name="history">Historial de reproducció</string>
+    <string name="ratings">Els més populars</string>
+    <string name="my_likes">Els meus preferits</string>
+    <string name="no_internet">Ho sentim, no podem connectar-te als nostres serveis. Reintentant…</string>
+</resources>
