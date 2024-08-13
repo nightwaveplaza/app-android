@@ -1,2 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <string name="support">Nous Supporter</string>
+    <string name="no_internet">Désolé, nous sommes incapable de vous connecter à nos services. Réessayer…</string>
+    <string name="ratings">Notes</string>
+    <string name="my_likes">Mes Favoris</string>
+    <string name="my_profile">Mon Profile</string>
+    <string name="settings">Paramètres</string>
+    <string name="about">A Propos</string>
+    <string name="history">Jouer l\'Historique</string>
+</resources>
