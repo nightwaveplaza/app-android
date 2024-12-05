@@ -64,7 +64,7 @@ jobs:
       - name: Rename release file
         run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-$version_name.apk
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Upload artifact
           path: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
