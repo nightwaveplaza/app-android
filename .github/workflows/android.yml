@@ -42,7 +42,7 @@ jobs:
           fi
 
       - name: Checkout keystore repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
         with:
           repository: ${{ secrets.KEYSTORE_GIT_REPOSITORY }}
           token: ${{ secrets.KEYSTORE_ACCESS_TOKEN }}
@@ -56,7 +56,7 @@ jobs:
       - name: Rename release file
         run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-$version_name.apk
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Upload artifact
           path: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
