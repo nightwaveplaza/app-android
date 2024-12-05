@@ -1,4 +1,4 @@
-name: Android CI
+name: Android Release
 
 env:
   KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
