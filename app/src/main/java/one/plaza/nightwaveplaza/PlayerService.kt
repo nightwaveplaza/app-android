@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
 import androidx.media3.common.AudioAttributes
-import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -216,14 +215,20 @@ class PlayerService : MediaLibraryService() {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
             Settings.isPlaying = isPlaying
+            if (isPlaying && player.mediaMetadata.artist == null) {
+                updateSongMetadata()
+            }
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            updateArtwork()
+            updateSongMetadata()
         }
     }
 
-    private fun updateArtwork() {
+    private var updatingMetadata = false
+    private fun updateSongMetadata() {
+        updatingMetadata = true
+
         CoroutineScope(Dispatchers.Default).launch(Dispatchers.IO) {
             val client = ApiClient()
             val status: ApiClient.Status
@@ -232,20 +237,26 @@ class PlayerService : MediaLibraryService() {
                 status = client.getStatus()
             } catch (err: Exception) {
                 println("updating: network exception")
+                updatingMetadata = false
                 return@launch
             }
+
+            updatingMetadata = false
 
             if (status.song.id.isNotEmpty()) {
                 withContext(Dispatchers.Main) {
                     val mi = player.currentMediaItem!!.mediaMetadata;
-                    val mb = mi.buildUpon().setArtworkUri(Uri.parse(status.song.artworkSrc)).build()
+                    val mb = mi.buildUpon()
+                        .setArtist(status.song.artist)
+                        .setTitle(status.song.title)
+                        .setArtworkUri(Uri.parse(status.song.artworkSrc))
+                        .build()
                     player.replaceMediaItem(
                         player.currentMediaItemIndex,
                         player.currentMediaItem!!.buildUpon().setMediaMetadata(mb).build()
                     )
                 }
             }
-
         }
     }
 
