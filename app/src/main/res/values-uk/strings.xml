@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ratings">Рейтинги</string>
+    <string name="my_likes">Вибране</string>
+    <string name="settings">Налаштування</string>
+    <string name="about">Про проєкт</string>
+    <string name="support">Підтримати нас</string>
+    <string name="history">Попередні треки</string>
+    <string name="my_profile">Мій профіль</string>
+    <string name="no_internet">Не вдається під\'єднатися до наших сервісів. Пробуємо ще раз…</string>
+</resources>
