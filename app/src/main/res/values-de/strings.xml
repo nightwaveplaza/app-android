@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ratings">Charts</string>
+    <string name="my_likes">Meine Favoriten</string>
+    <string name="my_profile">Mein Profil</string>
+    <string name="settings">Einstellungen</string>
+    <string name="about">Über</string>
+    <string name="support">Spenden</string>
+    <string name="history">Zuletzt Gespielt</string>
+    <string name="no_internet">Sorry, wir haben Verbindungsprobleme. Wiederverbinden…</string>
+</resources>

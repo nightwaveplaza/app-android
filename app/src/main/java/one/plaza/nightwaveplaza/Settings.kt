@@ -1,6 +1,7 @@
 package one.plaza.nightwaveplaza
 
 import one.plaza.nightwaveplaza.helpers.StorageHelper
+import java.util.Locale
 
 object Settings {
     private const val IS_PLAYING = "IsPlaying"
@@ -9,6 +10,7 @@ object Settings {
     private const val FULLSCREEN = "Fullscreen"
     private const val AUDIO_LQ = "AudioLowQuality"
     private const val VIEW_SRC_URI = "ViewVersion"
+    private const val LANGUAGE = "Language"
 
     var isPlaying: Boolean = false
         set(v) {
@@ -51,4 +53,11 @@ object Settings {
             field = v
         }
         get() = StorageHelper.load(VIEW_SRC_URI, "")
+
+    var language: String = ""
+        set(v) {
+            StorageHelper.save(LANGUAGE, v)
+            field = v
+        }
+        get() = StorageHelper.load(LANGUAGE, Locale.getDefault().language)
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ratings">Рейтинги</string>
+    <string name="my_profile">Мой профиль</string>
+    <string name="my_likes">Моё избранное</string>
+    <string name="settings">Настройки</string>
+    <string name="about">О Plaza</string>
+    <string name="support">Поддержать нас</string>
+    <string name="history">История</string>
+    <string name="no_internet">Не можем подключиться к нашим сервисам. Пробуем снова…</string>
+</resources>

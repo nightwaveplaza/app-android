@@ -230,7 +230,7 @@
         android:clickable="true"
         android:focusable="true"
         android:background="?android:attr/selectableItemBackground"
-        android:tag="donate">
+        android:tag="support">
 
         <ImageView
             android:layout_width="@dimen/nav_icon_size"

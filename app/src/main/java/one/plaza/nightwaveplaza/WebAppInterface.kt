@@ -1,19 +1,13 @@
 package one.plaza.nightwaveplaza
 
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
 import one.plaza.nightwaveplaza.helpers.Utils
 
 @UnstableApi
 class WebAppInterface(private val activity: MainActivity) {
-
-    @JavascriptInterface
-    fun showToast(message: String) {
-        activity.runOnUiThread {
-            activity.makeToast(message)
-        }
-    }
-
     @JavascriptInterface
     fun openDrawer() {
         activity.runOnUiThread {
@@ -43,40 +37,47 @@ class WebAppInterface(private val activity: MainActivity) {
     }
 
     @JavascriptInterface
+    fun getUserAgent(): String {
+        return Utils.getUserAgent()
+    }
+
+    @JavascriptInterface
+    fun setAudioQuality(lowQuality: Boolean) {
+        Settings.lowQualityAudio = lowQuality
+    }
+
+    @JavascriptInterface
+    fun setSleepTimer(timestamp: Long) {
+        activity.runOnUiThread {
+            activity.setSleepTimer(timestamp)
+        }
+    }
+
+    @JavascriptInterface
     fun getAuthToken(): String {
         return Settings.userToken
     }
 
     @JavascriptInterface
     fun setAuthToken(token: String) {
-//        if (token.isEmpty()) {
-//            activity.pushViewData("reactionUpdate", Reaction.getAsJson(mActivity))
-//        }
         Settings.userToken = token
     }
 
     @JavascriptInterface
-    fun getUserAgent(): String {
-        return Utils.getUserAgent()
-    }
-
-    @JavascriptInterface
-    fun getAudioQuality(): Boolean {
-        return Settings.lowQualityAudio
-    }
-
-    @JavascriptInterface
-    fun setAudioQuality(lowQuality: Boolean) {
-        Settings.lowQualityAudio = lowQuality
-        activity.runOnUiThread {
-            activity.setAudioQuality(lowQuality)
+    fun getAppVersion(): String {
+        try {
+            val pInfo: PackageInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
+            return pInfo.versionName + " (build " + pInfo.versionCode + ")"
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+            return "Error"
         }
     }
 
     @JavascriptInterface
-    fun setSleepTimer(minutes: Int) {
+    fun setLanguage(lang: String) {
         activity.runOnUiThread {
-            activity.setSleepTimer(minutes)
+            activity.setLanguage(lang)
         }
     }
 }

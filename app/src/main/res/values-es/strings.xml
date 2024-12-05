@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ratings">Popularidad</string>
+    <string name="my_profile">Mi perfil</string>
+    <string name="settings">Configuración</string>
+    <string name="my_likes">Mis Favoritos</string>
+    <string name="about">Acerca de</string>
+    <string name="support">Apóyenos</string>
+    <string name="history">Historial</string>
+    <string name="no_internet">Lo sentimos, no podemos conectarlo con nuestros servicios. Reintentando…</string>
+</resources>

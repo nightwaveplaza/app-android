@@ -3,24 +3,28 @@ package one.plaza.nightwaveplaza.ui
 import android.content.Intent
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.MainActivity
 import one.plaza.nightwaveplaza.R
-import one.plaza.nightwaveplaza.Settings
 
-@UnstableApi class ViewClient(private var activity: MainActivity): WebViewClient() {
+@UnstableApi
+class ViewClient(private var activity: MainActivity) : WebViewClient() {
     private var loadError = false
 
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest
     ): Boolean {
+        if (BuildConfig.DEBUG) {
+            return false
+        }
+
         return if (!request.url.toString().startsWith("https://m.plaza.one")) {
             val intent = Intent(Intent.ACTION_VIEW, request.url)
             view.context.startActivity(intent)
@@ -35,9 +39,9 @@ import one.plaza.nightwaveplaza.Settings
 
         if (loadError) {
             // Don't reload if web view paused
-            if (activity.webViewPaused) {
-                return
-            }
+//            if (activity.webViewPaused) {
+//                return
+//            }
 
             // Show toast and try again
             activity.makeToast(activity.getString(R.string.no_internet))
@@ -46,9 +50,7 @@ import one.plaza.nightwaveplaza.Settings
                 view.reload()
             }
         } else {
-            activity.webViewLoaded = true
-            activity.pushViewData("isPlaying", Settings.isPlaying.toString())
-            activity.pushViewData("sleepTime", Settings.sleepTime.toString())
+            activity.onWebViewLoaded()
         }
     }
 

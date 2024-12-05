@@ -1,18 +1,25 @@
 package one.plaza.nightwaveplaza
 
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
+import android.view.WindowManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -37,7 +44,6 @@ import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
-import one.plaza.nightwaveplaza.helpers.JsonHelper
 import one.plaza.nightwaveplaza.ui.ViewClient
 import java.util.Locale
 
@@ -52,19 +58,17 @@ class MainActivity : AppCompatActivity() {
     private var bgPlayerView: ImageView? = null
     private var drawer: DrawerLayout? = null
 
-    var webViewLoaded = false
-    var webViewPaused = false
+    private var webViewLoaded = false
     private var viewVersionJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activity = this
 
-        // Splash delay until page loaded
-        val content: View = findViewById(android.R.id.content)
-
-        content.viewTreeObserver.addOnPreDrawListener {
-            return@addOnPreDrawListener webViewLoaded
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                !webViewLoaded
+            }
         }
 
         // Button binding
@@ -86,13 +90,27 @@ class MainActivity : AppCompatActivity() {
         loadWebView()
 
         setupDrawer()
+        // temporary disabled due memory leaks
+        //allowOnLockScreen()
+        setBackButtonCallback()
     }
 
     override fun onStart() {
         super.onStart()
         initializeController()
         println("onStart")
+
         if (Build.VERSION.SDK_INT > 23) {
+            resumeWebView()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        println("onResume")
+        setFullscreen()
+
+        if (Build.VERSION.SDK_INT <= 23) {
             resumeWebView()
         }
     }
@@ -105,16 +123,6 @@ class MainActivity : AppCompatActivity() {
         // https://github.com/google/ExoPlayer/issues/4878
         if (Build.VERSION.SDK_INT > 23) {
             pauseWebView()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        println("onResume")
-        setFullscreen()
-
-        if (Build.VERSION.SDK_INT <= 23) {
-            resumeWebView()
         }
     }
 
@@ -172,7 +180,6 @@ class MainActivity : AppCompatActivity() {
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             super.onPlayWhenReadyChanged(playWhenReady, reason)
-            println(controller?.isPlaying)
             if (playWhenReady && controller?.isPlaying == false) {
                 pushViewData("isBuffering", "true")
             }
@@ -193,7 +200,7 @@ class MainActivity : AppCompatActivity() {
         webSettings.domStorageEnabled = true
         webView.addJavascriptInterface(WebAppInterface(this), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
 
         if (BuildConfig.DEBUG) {
             webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
@@ -206,7 +213,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadWebView() {
-        if (viewVersionJob != null) {
+//        if (BuildConfig.DEBUG) {
+//            webView.loadUrl("http://plaza.local:4173")
+//            return
+//        }
+
+        if (viewVersionJob != null && viewVersionJob!!.isActive) {
             return
         }
 
@@ -250,7 +262,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webViewPaused = true
+        //webViewPaused = true
         if (webViewLoaded) {
             webView.onPause()
             webView.pauseTimers()
@@ -258,19 +270,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun resumeWebView() {
-        webViewPaused = false
+        //webViewPaused = false
+        webView.onResume()
+        webView.resumeTimers()
+
         if (webViewLoaded) {
-            webView.onResume()
-            webView.resumeTimers()
-            pushViewData("isPlaying", Settings.isPlaying.toString())
+            if (controller != null) {
+                pushViewData("isPlaying", controller!!.isPlaying.toString())
+            }
         } else {
             loadWebView()
         }
     }
 
+    fun onWebViewLoaded() {
+        webViewLoaded = true
+        if (controller != null) {
+            pushViewData("isPlaying", controller!!.isPlaying.toString())
+        }
+        pushViewData("sleepTime", Settings.sleepTime.toString())
+    }
+
     fun pushViewData(action: String, payload: String) {
-        println("pushViewData: $payload")
-        val call = "window['plaza'].push('$action', $payload)"
+        val call = "window['emitter'].emit('$action', $payload)"
+        println(call)
         runOnUiThread { webView.evaluateJavascript(call, null) }
     }
 
@@ -305,20 +328,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showWindow(view: View) {
-        var window = view.tag.toString()
-        if (window == "user-favorites" || window == "user") {
-            if (Settings.userToken == "") {
-                window = "user-login"
-            }
-        }
-        window = JsonHelper.windowName(window)
-        pushViewData("openWindow", window)
+        val window = view.tag.toString()
+        pushViewData("openWindow", String.format("'%s'", window))
         drawer?.closeDrawers()
-    }
-
-    fun setAudioQuality(lowQuality: Boolean) {
-        val quality = if (lowQuality) "LOW" else "HIGH"
-        makeToast("Set audio quality to $quality. Please restart the playback.")
     }
 
     private var toast: Toast? = null
@@ -328,19 +340,65 @@ class MainActivity : AppCompatActivity() {
         toast?.show()
     }
 
-    fun setSleepTimer(minutes: Int) {
-        if (minutes == 0) {
-            makeToast(getString(R.string.timer_disabled))
-        } else {
-            makeToast(String.format(Locale.US, getString(R.string.timer_start), minutes))
-        }
-
-        val time: Long = if (minutes > 0) System.currentTimeMillis() + (minutes * 60 * 1000L) else 0
+    fun setSleepTimer(sleepTime: Long) {
+        val time: Long = if (sleepTime > 0) sleepTime else 0
         Settings.sleepTime = time
         controller?.setSleepTimer()
     }
 
     fun openDrawer() {
         drawer?.openDrawer(GravityCompat.START)
+    }
+
+    private fun allowOnLockScreen() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            keyguardManager.requestDismissKeyguard(this, null)
+        } else {
+            this.window.addFlags(
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            )
+        }
+    }
+
+    private fun setBackButtonCallback() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val a = Intent(Intent.ACTION_MAIN)
+                a.addCategory(Intent.CATEGORY_HOME)
+                a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(a)
+            }
+        })
+    }
+
+    fun setLanguage(lang: String) {
+        // Don't react to change to the same language
+        val loc: Locale = if (lang.contains('-')) {
+            Locale(
+                lang.substring(0, lang.indexOf('-')),
+                lang.substring(lang.indexOf('-') + 1, lang.length)
+            )
+        } else {
+            Locale(lang)
+        }
+
+        if (Settings.language == loc.language) {
+            return
+        }
+
+        Settings.language = loc.language
+
+        // As locale triggers activity lifecycle, set webview as not loaded
+        webViewLoaded = false
+
+        // Set application locale
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(loc.language)
+        )
     }
 }
