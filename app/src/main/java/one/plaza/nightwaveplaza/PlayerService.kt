@@ -68,7 +68,7 @@ class PlayerService : MediaLibraryService() {
         super.onDestroy()
     }
 
-    override fun onTaskRemoved(rootIntent: Intent) {
+    override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
         // https://github.com/androidx/media/issues/167#issuecomment-1615184728
         if (!player.playWhenReady) {
@@ -255,11 +255,11 @@ class PlayerService : MediaLibraryService() {
                 if (loadErrorInfo.errorCount <= 5 && loadErrorInfo.exception is HttpDataSource.HttpDataSourceException) {
                     return 5000
                 }
-                return C.TIME_UNSET
+                return 1000
             }
 
             override fun getMinimumLoadableRetryCount(dataType: Int): Int {
-                return Int.MAX_VALUE
+                return 128
             }
         }
 
