@@ -2,14 +2,12 @@ package one.plaza.nightwaveplaza
 
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
-import android.app.LocaleManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.os.LocaleList
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -398,13 +396,9 @@ class MainActivity : AppCompatActivity() {
         // As locale triggers activity lifecycle, set webview as not loaded
         webViewLoaded = false
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            getSystemService(LocaleManager::class.java)
-                .applicationLocales = LocaleList.forLanguageTags(loc.language)
-        } else {
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(loc.language)
-            )
-        }
+        // Set application locale
+        AppCompatDelegate.setApplicationLocales(
+            LocaleListCompat.forLanguageTags(loc.language)
+        )
     }
 }
