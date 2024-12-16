@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="my_profile">私のプロフィール</string>
-    <string name="my_likes">私のお気に入り</string>
+    <string name="my_profile">プロフィール</string>
+    <string name="my_likes">お気に入り</string>
     <string name="settings">設定</string>
-    <string name="about">について</string>
+    <string name="about">概要</string>
     <string name="history">プレイ履歴</string>
     <string name="ratings">評価</string>
-    <string name="no_internet">申し訳ございませんが、当社のサービスに接続できません。 再試行中…</string>
-    <string name="support">ご支援</string>
+    <string name="no_internet">接続できません。 再試行中…</string>
+    <string name="support">支援</string>
 </resources>
