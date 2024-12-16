@@ -8,7 +8,7 @@ env:
 on:
   push:
     paths:
-      - 'build.gradle'
+      - 'app/build.gradle'
 
 jobs:
   build:
