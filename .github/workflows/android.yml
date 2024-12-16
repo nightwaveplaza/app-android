@@ -7,10 +7,8 @@ env:
 
 on:
   push:
-    branches:
-      - master
-    tags:
-      - v*
+    paths:
+      - 'build.gradle'
 
 jobs:
   build:
