@@ -90,8 +90,6 @@ class MainActivity : AppCompatActivity() {
         loadWebView()
 
         setupDrawer()
-        // temporary disabled due memory leaks
-        //allowOnLockScreen()
         setBackButtonCallback()
     }
 
@@ -348,21 +346,6 @@ class MainActivity : AppCompatActivity() {
 
     fun openDrawer() {
         drawer?.openDrawer(GravityCompat.START)
-    }
-
-    private fun allowOnLockScreen() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-            val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            keyguardManager.requestDismissKeyguard(this, null)
-        } else {
-            this.window.addFlags(
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
-                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-            )
-        }
     }
 
     private fun setBackButtonCallback() {
