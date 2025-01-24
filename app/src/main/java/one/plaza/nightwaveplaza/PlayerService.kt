@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
 import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -89,8 +90,13 @@ class PlayerService : MediaLibraryService() {
         val dataSourceFactory: DataSource.Factory = DefaultHttpDataSource.Factory().setUserAgent(
             Utils.getUserAgent())
 
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+
         val exoPlayer: ExoPlayer = ExoPlayer.Builder(this).apply {
-            setAudioAttributes(AudioAttributes.DEFAULT, true)
+            setAudioAttributes(audioAttributes, true)
             setHandleAudioBecomingNoisy(true)
             setMediaSourceFactory(
                 HlsMediaSource.Factory(dataSourceFactory)
