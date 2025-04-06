@@ -97,10 +97,6 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
         initializeController()
         println("onStart")
-
-        if (Build.VERSION.SDK_INT > 23) {
-            resumeWebView()
-        }
     }
 
     override fun onResume() {
@@ -108,9 +104,7 @@ class MainActivity : AppCompatActivity() {
         println("onResume")
         setFullscreen()
 
-        if (Build.VERSION.SDK_INT <= 23) {
-            resumeWebView()
-        }
+        resumeWebView()
     }
 
     override fun onStop() {
@@ -118,10 +112,7 @@ class MainActivity : AppCompatActivity() {
         println("onStop")
         releaseController()
 
-        // https://github.com/google/ExoPlayer/issues/4878
-        if (Build.VERSION.SDK_INT > 23) {
-            pauseWebView()
-        }
+        pauseWebView()
     }
 
     override fun onPause() {
@@ -263,14 +254,12 @@ class MainActivity : AppCompatActivity() {
         //webViewPaused = true
         if (webViewLoaded) {
             webView.onPause()
-            webView.pauseTimers()
         }
     }
 
     private fun resumeWebView() {
         //webViewPaused = false
         webView.onResume()
-        webView.resumeTimers()
 
         if (webViewLoaded) {
             if (controller != null) {
