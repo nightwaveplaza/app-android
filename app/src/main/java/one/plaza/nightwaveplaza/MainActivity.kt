@@ -1,21 +1,17 @@
 package one.plaza.nightwaveplaza
 
-import android.annotation.SuppressLint
-import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.DialogInterface
+import android.content.DialogInterface.OnClickListener
 import android.content.Intent
-import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
-import android.view.WindowManager
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
@@ -34,22 +30,21 @@ import com.bumptech.glide.Glide
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import com.google.gson.Gson
 import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
-import one.plaza.nightwaveplaza.ui.ViewClient
+import one.plaza.nightwaveplaza.socket.SocketClient
+import one.plaza.nightwaveplaza.view.WebViewCallback
+import one.plaza.nightwaveplaza.view.WebViewManager
+import org.json.JSONObject
 import java.util.Locale
+import kotlin.system.exitProcess
 
 
 @UnstableApi
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), WebViewCallback {
     private val controller: MediaController?
         get() = if (controllerFuture.isDone) controllerFuture.get() else null
     private lateinit var controllerFuture: ListenableFuture<MediaController>
@@ -58,8 +53,9 @@ class MainActivity : AppCompatActivity() {
     private var bgPlayerView: ImageView? = null
     private var drawer: DrawerLayout? = null
 
-    private var webViewLoaded = false
-    private var viewVersionJob: Job? = null
+    private lateinit var webViewManager: WebViewManager
+
+    private lateinit var status: ApiClient.Status
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         installSplashScreen().apply {
             setKeepOnScreenCondition {
-                !webViewLoaded
+                !webViewManager.webViewLoaded
             }
         }
 
@@ -86,42 +82,60 @@ class MainActivity : AppCompatActivity() {
         bgPlayerView = findViewById(R.id.bg_view)
         drawer = findViewById(R.id.drawer)
 
-        initializeWebView()
-        loadWebView()
-
         setupDrawer()
         setBackButtonCallback()
+
+        webViewManager = WebViewManager(
+            callback = this,
+            webView = webView,
+            lifecycle = lifecycle
+        )
+        webViewManager.initialize()
+        webViewManager.loadWebView()
+    }
+
+    fun pushStatus() {
+        runOnUiThread {
+            webViewManager.pushData("status", Gson().toJson(status))
+        }
     }
 
     override fun onStart() {
         super.onStart()
-        initializeController()
         println("onStart")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        println("onResume")
-        setFullscreen()
-
-        resumeWebView()
+        initializeController()
     }
 
     override fun onStop() {
         super.onStop()
         println("onStop")
         releaseController()
+    }
 
-        pauseWebView()
+    override fun onResume() {
+        super.onResume()
+        println("onResume")
+        setFullscreen()
     }
 
     override fun onPause() {
         super.onPause()
         println("onPause")
+    }
 
-        if (Build.VERSION.SDK_INT <= 23) {
-            pauseWebView()
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        Glide.with(this).clear(bgPlayerView!!)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        webView.saveState(outState)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        webView.restoreState(savedInstanceState)
     }
 
     private fun setupDrawer() {
@@ -132,6 +146,7 @@ class MainActivity : AppCompatActivity() {
         drawer?.drawerElevation = 0f
     }
 
+    @UnstableApi
     private fun initializeController() {
         controllerFuture = MediaController.Builder(
             activity as Context,
@@ -150,151 +165,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun releaseController() {
         MediaController.releaseFuture(controllerFuture)
-    }
-
-    fun play() {
-        if (controller?.isPlaying == true) {
-            controller?.pause()
-        } else {
-            controller?.play(activity as Context)
-        }
+        controller?.removeListener(playerListener)
     }
 
     private var playerListener: Player.Listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            pushViewData("isPlaying", isPlaying.toString())
-            pushViewData("sleepTime", Settings.sleepTime.toString())
+            webViewManager.pushData("isPlaying", isPlaying.toString())
+            webViewManager.pushData("sleepTime", Settings.sleepTime.toString())
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             super.onPlayWhenReadyChanged(playWhenReady, reason)
             if (playWhenReady && controller?.isPlaying == false) {
-                pushViewData("isBuffering", "true")
+                webViewManager.pushData("isBuffering", "true")
             }
         }
 
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            pushViewData("isPlaying", "false")
+            webViewManager.pushData("isPlaying", "false")
             // TODO: toast
         }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun initializeWebView() {
-        val webSettings = webView.settings
-        webSettings.javaScriptEnabled = true
-        webSettings.textZoom = 100
-        webSettings.domStorageEnabled = true
-        webView.addJavascriptInterface(WebAppInterface(this), "AndroidInterface")
-        webView.setBackgroundColor(Color.TRANSPARENT)
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-
-        if (BuildConfig.DEBUG) {
-            webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
-            WebView.setWebContentsDebuggingEnabled(true)
-        } else {
-            webSettings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
-        }
-
-        webView.webViewClient = ViewClient(this)
-    }
-
-    private fun loadWebView() {
-//        if (BuildConfig.DEBUG) {
-//            webView.loadUrl("http://plaza.local:4173")
-//            return
-//        }
-
-        if (viewVersionJob != null && viewVersionJob!!.isActive) {
-            return
-        }
-
-        viewVersionJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.IO) {
-            val client = ApiClient()
-            var version: ApiClient.Version? = null
-
-            while (version == null && isActive) {
-                try {
-                    version = client.getVersion()
-                } catch (err: Exception) {
-                    runOnUiThread {
-                        makeToast(getString(R.string.no_internet))
-                    }
-                    delay(5000)
-                }
-            }
-
-            if (version == null) {
-                return@launch
-            }
-
-            runOnUiThread {
-                if (version.viewSrc != Settings.viewUri) {
-                    webView.clearCache(true)
-                    Settings.viewUri = version.viewSrc
-                }
-                webView.stopLoading()
-                webView.loadUrl(Settings.viewUri)
-            }
-        }
-    }
-
-    private fun pauseWebView() {
-        if (!webViewLoaded) {
-            webView.stopLoading()
-
-            if (viewVersionJob != null) {
-                viewVersionJob?.cancel()
-                viewVersionJob = null
-            }
-        }
-
-        //webViewPaused = true
-        if (webViewLoaded) {
-            webView.onPause()
-        }
-    }
-
-    private fun resumeWebView() {
-        //webViewPaused = false
-        webView.onResume()
-
-        if (webViewLoaded) {
-            if (controller != null) {
-                pushViewData("isPlaying", controller!!.isPlaying.toString())
-            }
-        } else {
-            loadWebView()
-        }
-    }
-
-    fun onWebViewLoaded() {
-        webViewLoaded = true
-        if (controller != null) {
-            pushViewData("isPlaying", controller!!.isPlaying.toString())
-        }
-        pushViewData("sleepTime", Settings.sleepTime.toString())
-    }
-
-    fun pushViewData(action: String, payload: String) {
-        val call = "window['emitter'].emit('$action', $payload)"
-        println(call)
-        runOnUiThread { webView.evaluateJavascript(call, null) }
-    }
-
-    fun setBackground(backgroundSrc: String) {
-        if (backgroundSrc != "solid") {
-            Glide.with(this).load(backgroundSrc).fitCenter().into(bgPlayerView!!)
-        } else {
-            Glide.with(this).clear(bgPlayerView!!)
-        }
-    }
-
-    fun toggleFullscreen() {
-        Settings.fullScreen = !Settings.fullScreen
-        setFullscreen()
     }
 
     private fun setFullscreen() {
@@ -316,25 +208,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun showWindow(view: View) {
         val window = view.tag.toString()
-        pushViewData("openWindow", String.format("'%s'", window))
+        webViewManager.pushData("openWindow", window)
         drawer?.closeDrawers()
-    }
-
-    private var toast: Toast? = null
-    fun makeToast(msg: String) {
-        toast?.cancel()
-        toast = Toast.makeText(this, msg, Toast.LENGTH_LONG)
-        toast?.show()
-    }
-
-    fun setSleepTimer(sleepTime: Long) {
-        val time: Long = if (sleepTime > 0) sleepTime else 0
-        Settings.sleepTime = time
-        controller?.setSleepTimer()
-    }
-
-    fun openDrawer() {
-        drawer?.openDrawer(GravityCompat.START)
     }
 
     private fun setBackButtonCallback() {
@@ -366,11 +241,105 @@ class MainActivity : AppCompatActivity() {
         Settings.language = loc.language
 
         // As locale triggers activity lifecycle, set webview as not loaded
-        webViewLoaded = false
+        // TODO change without reload
+        //webViewLoaded = false
 
         // Set application locale
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(loc.language)
         )
+    }
+
+    fun pushPlaybackState() {
+        runOnUiThread {
+            if (controller != null) {
+                webViewManager.pushData("isPlaying", controller!!.isPlaying.toString())
+            }
+            webViewManager.pushData("sleepTime", Settings.sleepTime.toString())
+        }
+    }
+
+    fun notifyNoInternet() {
+        val alertBuilder = AlertDialog.Builder(this)
+        alertBuilder
+            .setTitle("No Connection")
+            .setMessage(getString(R.string.no_internet))
+            .setCancelable(false)
+            .setPositiveButton("Exit", object : OnClickListener {
+                override fun onClick(dialog: DialogInterface, which: Int) {
+                    exitProcess(0)
+                }
+            })
+            .setNegativeButton("Retry", object : OnClickListener {
+                override fun onClick(dialog: DialogInterface, which: Int) {
+                    dialog.cancel()
+                    webViewManager.loadWebView()
+                }
+            })
+        alertBuilder.create().show()
+    }
+
+    override fun getActivityContext(): Context = this
+
+    override fun onWebViewLoaded() {
+        runOnUiThread {
+            pushPlaybackState()
+        }
+    }
+
+    override fun onWebViewLoadFail() {
+        notifyNoInternet()
+    }
+
+    override fun onOpenDrawer() {
+        runOnUiThread {
+            drawer?.openDrawer(GravityCompat.START)
+        }
+    }
+
+    override fun onPlayAudio() {
+        runOnUiThread {
+            if (controller?.isPlaying == true) {
+                controller?.pause()
+            } else {
+                controller?.play(activity as Context)
+            }
+        }
+    }
+
+    override fun onSetBackground(backgroundSrc: String) {
+        runOnUiThread {
+            if (backgroundSrc != "solid") {
+                Glide.with(this).load(backgroundSrc).fitCenter().into(bgPlayerView!!)
+            } else {
+                Glide.with(this).clear(bgPlayerView!!)
+            }
+        }
+    }
+
+    override fun onToggleFullscreen() {
+        runOnUiThread {
+            Settings.fullScreen = !Settings.fullScreen
+            setFullscreen()
+        }
+    }
+
+    override fun onSetSleepTimer(timestamp: Long) {
+        runOnUiThread {
+            val time: Long = if (timestamp > 0) timestamp else 0
+            Settings.sleepTime = time
+            controller?.setSleepTimer()
+        }
+    }
+
+    override fun onSetLanguage(lang: String) {
+        runOnUiThread {
+            setLanguage(lang)
+        }
+    }
+
+    override fun onReady() {
+        pushStatus()
+        pushPlaybackState()
     }
 }

@@ -1,39 +1,35 @@
-package one.plaza.nightwaveplaza
+package one.plaza.nightwaveplaza.view
 
+import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
+import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.helpers.Utils
 
 @UnstableApi
-class WebAppInterface(private val activity: MainActivity) {
+class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
+    val context: Context = callback.getActivityContext()
+
     @JavascriptInterface
     fun openDrawer() {
-        activity.runOnUiThread {
-            activity.openDrawer()
-        }
+        callback.onOpenDrawer()
     }
 
     @JavascriptInterface
     fun audioPlay() {
-        activity.runOnUiThread {
-            activity.play()
-        }
+        callback.onPlayAudio()
     }
 
     @JavascriptInterface
     fun setBackground(backgroundSrc: String) {
-        activity.runOnUiThread {
-            activity.setBackground(backgroundSrc)
-        }
+        callback.onSetBackground(backgroundSrc)
     }
 
     @JavascriptInterface
     fun toggleFullscreen() {
-        activity.runOnUiThread {
-            activity.toggleFullscreen()
-        }
+        callback.onToggleFullscreen()
     }
 
     @JavascriptInterface
@@ -48,9 +44,7 @@ class WebAppInterface(private val activity: MainActivity) {
 
     @JavascriptInterface
     fun setSleepTimer(timestamp: Long) {
-        activity.runOnUiThread {
-            activity.setSleepTimer(timestamp)
-        }
+        callback.onSetSleepTimer(timestamp)
     }
 
     @JavascriptInterface
@@ -66,7 +60,7 @@ class WebAppInterface(private val activity: MainActivity) {
     @JavascriptInterface
     fun getAppVersion(): String {
         try {
-            val pInfo: PackageInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
+            val pInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             return pInfo.versionName + " (build " + pInfo.versionCode + ")"
         } catch (e: PackageManager.NameNotFoundException) {
             e.printStackTrace()
@@ -76,8 +70,11 @@ class WebAppInterface(private val activity: MainActivity) {
 
     @JavascriptInterface
     fun setLanguage(lang: String) {
-        activity.runOnUiThread {
-            activity.setLanguage(lang)
-        }
+        callback.onSetLanguage(lang)
+    }
+
+    @JavascriptInterface
+    fun onReady() {
+        callback.onReady()
     }
 }
