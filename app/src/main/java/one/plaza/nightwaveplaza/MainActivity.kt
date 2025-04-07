@@ -15,7 +15,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -35,16 +34,16 @@ import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
+import one.plaza.nightwaveplaza.socket.SocketCallback
 import one.plaza.nightwaveplaza.socket.SocketClient
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
-import org.json.JSONObject
 import java.util.Locale
 import kotlin.system.exitProcess
 
 
 @UnstableApi
-class MainActivity : AppCompatActivity(), WebViewCallback {
+class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private val controller: MediaController?
         get() = if (controllerFuture.isDone) controllerFuture.get() else null
     private lateinit var controllerFuture: ListenableFuture<MediaController>
@@ -54,6 +53,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     private var drawer: DrawerLayout? = null
 
     private lateinit var webViewManager: WebViewManager
+    private lateinit var socketClient: SocketClient
 
     private lateinit var status: ApiClient.Status
 
@@ -61,11 +61,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         super.onCreate(savedInstanceState)
         activity = this
 
-        installSplashScreen().apply {
-            setKeepOnScreenCondition {
-                !webViewManager.webViewLoaded
-            }
-        }
+//        installSplashScreen().apply {
+//            setKeepOnScreenCondition {
+//                false
+//                //!webViewManager.webViewLoaded
+//            }
+//        }
 
         // Button binding
         val activityMainBinding: ActivityMainBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -92,11 +93,19 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         )
         webViewManager.initialize()
         webViewManager.loadWebView()
+
+        socketClient = SocketClient(
+            callback = this,
+            lifecycle = lifecycle
+        )
+        socketClient.initialize()
     }
 
     fun pushStatus() {
         runOnUiThread {
-            webViewManager.pushData("status", Gson().toJson(status))
+            if (::status.isInitialized) {
+                webViewManager.pushData("status", Gson().toJson(status))
+            }
         }
     }
 
@@ -259,6 +268,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         }
     }
 
+    var noInternetReasonIsWebView = true
     fun notifyNoInternet() {
         val alertBuilder = AlertDialog.Builder(this)
         alertBuilder
@@ -273,7 +283,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
             .setNegativeButton("Retry", object : OnClickListener {
                 override fun onClick(dialog: DialogInterface, which: Int) {
                     dialog.cancel()
-                    webViewManager.loadWebView()
+                    if (noInternetReasonIsWebView) {
+                        webViewManager.loadWebView()
+                    }
+                    else {
+                        socketClient.connect()
+                    }
                 }
             })
         alertBuilder.create().show()
@@ -282,13 +297,14 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     override fun getActivityContext(): Context = this
 
     override fun onWebViewLoaded() {
-        runOnUiThread {
-            pushPlaybackState()
+        if (!socketClient.isConnected) {
+            socketClient.connect()
         }
     }
 
     override fun onWebViewLoadFail() {
-        notifyNoInternet()
+        noInternetReasonIsWebView = true
+        runOnUiThread { notifyNoInternet() }
     }
 
     override fun onOpenDrawer() {
@@ -341,5 +357,29 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     override fun onReady() {
         pushStatus()
         pushPlaybackState()
+    }
+
+    override fun onStatus(s: String) {
+        status = Gson().fromJson(s, ApiClient.Status::class.java)
+        pushStatus()
+    }
+
+    override fun onListeners(listeners: Int) {
+        runOnUiThread {
+            webViewManager.pushData("listeners", listeners)
+        }
+    }
+
+    override fun onReactions(reactions: Int) {
+        runOnUiThread {
+            webViewManager.pushData("reactions", reactions)
+        }
+    }
+
+    override fun onSocketReconnectFailed() {
+        runOnUiThread {
+            noInternetReasonIsWebView = false
+            notifyNoInternet()
+        }
     }
 }
