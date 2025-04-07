@@ -2,6 +2,7 @@ package one.plaza.nightwaveplaza.view
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.view.View
 import android.webkit.WebResourceError
@@ -35,10 +36,7 @@ class WebViewManager(
 
     private var viewVersionJob: Job? = null
     var webViewLoaded = false
-
-    init {
-        lifecycle.addObserver(this)
-    }
+    private val webViewClient = CustomWebViewClient()
 
     @SuppressLint("SetJavaScriptEnabled")
     fun initialize() {
@@ -49,7 +47,6 @@ class WebViewManager(
         webView.addJavascriptInterface(WebViewJavaScriptHandler(callback), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-        webView.visibility = View.GONE
 
         if (BuildConfig.DEBUG) {
             webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
@@ -58,12 +55,14 @@ class WebViewManager(
             webSettings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
         }
 
-        webView.webViewClient = CustomWebViewClient()
+        webView.webViewClient = webViewClient
 
         lifecycle.addObserver(LifeCycleObserver())
     }
 
     fun loadWebView() {
+        webViewClient.resetAttempts()
+
         if (BuildConfig.DEBUG) {
             webView.loadUrl("http://plaza.local:4173")
             return
@@ -138,11 +137,11 @@ class WebViewManager(
         //webViewPaused = false
         webView.onResume()
 
-        if (webViewLoaded) {
-            onWebViewLoaded()
-        } else {
-            loadWebView()
-        }
+//        if (webViewLoaded) {
+//            onWebViewLoaded()
+//        } else {
+//            loadWebView()
+//        }
     }
 
     fun pushData(action: String, payload: Any) {
@@ -155,11 +154,23 @@ class WebViewManager(
 
     fun onWebViewLoaded() {
         webViewLoaded = true
+        callback.onWebViewLoaded()
     }
 
-    private inner class CustomWebViewClient: WebViewClient() {
+    private inner class CustomWebViewClient : WebViewClient() {
         private var loadError = false
         private var attempts = 0
+
+        fun resetAttempts() {
+            attempts = 0
+        }
+
+        private fun retryWithDelay(url: String) {
+            lifecycle.coroutineScope.launch {
+                delay(3000)
+                webView.loadUrl(url)
+            }
+        }
 
         override fun shouldOverrideUrlLoading(
             view: WebView,
@@ -178,19 +189,19 @@ class WebViewManager(
             }
         }
 
+        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+            super.onPageStarted(view, url, favicon)
+            loadError = false
+        }
+
         override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
 
             if (loadError) {
-                view.visibility = View.GONE
-
-                if (attempts < 4) {
-                    // Show toast and try again
-                    lifecycle.coroutineScope.launch {
-                        delay(3000)
-                        attempts += 1
-                        view.reload()
-                    }
+                webView.visibility = View.GONE
+                if (attempts < 3) {
+                    retryWithDelay(url)
+                    attempts += 1
                 } else {
                     callback.onWebViewLoadFail()
                 }
@@ -218,9 +229,11 @@ class WebViewManager(
                 Lifecycle.Event.ON_RESUME -> {
                     resumeWebView()
                 }
+
                 Lifecycle.Event.ON_PAUSE -> {
                     pauseWebView()
                 }
+
                 else -> {}
             }
         }
