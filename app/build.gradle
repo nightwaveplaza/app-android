@@ -109,6 +109,10 @@ dependencies {
 
     implementation 'ch.acra:acra-http:5.11.3'
 
+    implementation ('io.socket:socket.io-client:2.1.2') {
+        exclude group: 'org.json', module: 'json'
+    }
+
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
 }
 

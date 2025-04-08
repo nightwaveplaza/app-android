@@ -14,12 +14,13 @@ class SocketClient(
     private val callback: SocketCallback,
     private val lifecycle: Lifecycle,
 ) : LifecycleObserver {
-    private lateinit var mSocket: Socket
-    public var isConnected = false
+    private var socket: Socket? = null
+    var isConnected = false
+    private val lifeCycleObserver = LifeCycleObserver()
 
     fun initialize() {
         try {
-            mSocket = IO.socket(
+            socket = IO.socket(
                 "https://plaza.one",
                 IO.Options.builder()
                     .setPath("/ws")
@@ -32,34 +33,45 @@ class SocketClient(
 
         createSocketListeners()
 
-        lifecycle.addObserver(LifeCycleObserver())
+        lifecycle.addObserver(lifeCycleObserver)
     }
 
     fun connect() {
-        mSocket.connect()
+        socket?.connect()
     }
 
     fun disconnect() {
-        mSocket.disconnect()
+        socket?.disconnect()
+    }
+
+    fun destroy() {
+        disconnect()
+        socket?.off()
+        lifecycle.removeObserver(lifeCycleObserver)
     }
 
     private fun createSocketListeners() {
-        mSocket.on("status") { args ->
-            if (args[0] != null) {
-                callback.onStatus((args[0] as JSONObject).toString())
+        socket?.on("status") { args ->
+            (args.getOrNull(0) as? JSONObject)?.let {
+                callback.onStatus(it.toString())
             }
-        }.on("listeners") { args ->
-            if (args[0] != null) {
-                callback.onListeners(args[0] as Int)
+        }?.on("listeners") { args ->
+            (args.getOrNull(0) as? Int)?.let {
+                callback.onListeners(it)
             }
-        }.on("reactions") { args ->
-            if (args[0] != null) {
-                callback.onReactions(args[0] as Int)
+        }?.on("reactions") { args ->
+            (args.getOrNull(0) as? Int)?.let {
+                callback.onReactions(it)
             }
-        }.on("connect") { args -> isConnected = true
-        }.on("disconnect")  { args -> isConnected = false }
+        }?.on("connect") { args ->
+            isConnected = true
+            callback.onSocketConnect()
+        }?.on("disconnect")  { args ->
+            isConnected = false
+            callback.onSocketDisconnect()
+        }
 
-        mSocket.io().on(Manager.EVENT_RECONNECT_FAILED) {
+        socket?.io()?.on(Manager.EVENT_RECONNECT_FAILED) {
             callback.onSocketReconnectFailed()
         }
     }
@@ -67,6 +79,10 @@ class SocketClient(
     inner class LifeCycleObserver : LifecycleEventObserver {
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             when (event) {
+                Lifecycle.Event.ON_DESTROY -> {
+                    destroy()
+                }
+
                 Lifecycle.Event.ON_RESUME -> {
                     connect()
                 }
