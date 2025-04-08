@@ -50,6 +50,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private lateinit var activity: AppCompatActivity
     private lateinit var webView: WebView
     private var bgPlayerView: ImageView? = null
+    private var loadingImage: ImageView? = null
     private var drawer: DrawerLayout? = null
 
     private lateinit var webViewManager: WebViewManager
@@ -60,13 +61,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         activity = this
-
-//        installSplashScreen().apply {
-//            setKeepOnScreenCondition {
-//                false
-//                //!webViewManager.webViewLoaded
-//            }
-//        }
 
         // Button binding
         val activityMainBinding: ActivityMainBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -82,6 +76,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         webView = findViewById(R.id.webview)
         bgPlayerView = findViewById(R.id.bg_view)
         drawer = findViewById(R.id.drawer)
+        loadingImage = findViewById(R.id.loading_gif)
+        Glide.with(this).load(R.raw.hourglass).into(loadingImage!!)
 
         setupDrawer()
         setBackButtonCallback()
@@ -104,7 +100,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     fun pushStatus() {
         runOnUiThread {
             if (::status.isInitialized) {
-                webViewManager.pushData("status", Gson().toJson(status))
+                webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
             }
         }
     }
@@ -127,14 +123,14 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         setFullscreen()
     }
 
-    override fun onPause() {
-        super.onPause()
-        println("onPause")
-    }
-
     override fun onDestroy() {
         super.onDestroy()
+        webView.apply {
+            stopLoading()
+            destroy()
+        }
         Glide.with(this).clear(bgPlayerView!!)
+        Glide.with(this).clear(loadingImage!!)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -175,6 +171,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private fun releaseController() {
         MediaController.releaseFuture(controllerFuture)
         controller?.removeListener(playerListener)
+        controller?.release()
     }
 
     private var playerListener: Player.Listener = object : Player.Listener {
@@ -268,7 +265,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
-    var noInternetReasonIsWebView = true
     fun notifyNoInternet() {
         val alertBuilder = AlertDialog.Builder(this)
         alertBuilder
@@ -277,34 +273,34 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             .setCancelable(false)
             .setPositiveButton("Exit", object : OnClickListener {
                 override fun onClick(dialog: DialogInterface, which: Int) {
-                    exitProcess(0)
+                    finish()
                 }
             })
             .setNegativeButton("Retry", object : OnClickListener {
                 override fun onClick(dialog: DialogInterface, which: Int) {
                     dialog.cancel()
-                    if (noInternetReasonIsWebView) {
-                        webViewManager.loadWebView()
-                    }
-                    else {
-                        socketClient.connect()
-                    }
+                    webViewManager.loadWebView()
                 }
             })
         alertBuilder.create().show()
     }
 
+    private fun stopLoadingAnimation() {
+        loadingImage?.visibility = View.GONE
+        Glide.with(this).clear(loadingImage!!)
+    }
+
     override fun getActivityContext(): Context = this
 
+    override fun onWebViewLoadFail() {
+        runOnUiThread { notifyNoInternet() }
+    }
+
     override fun onWebViewLoaded() {
+        stopLoadingAnimation()
         if (!socketClient.isConnected) {
             socketClient.connect()
         }
-    }
-
-    override fun onWebViewLoadFail() {
-        noInternetReasonIsWebView = true
-        runOnUiThread { notifyNoInternet() }
     }
 
     override fun onOpenDrawer() {
@@ -359,27 +355,42 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         pushPlaybackState()
     }
 
+    override fun onReconnectRequest() {
+        socketClient.connect()
+    }
+
     override fun onStatus(s: String) {
         status = Gson().fromJson(s, ApiClient.Status::class.java)
         pushStatus()
     }
 
     override fun onListeners(listeners: Int) {
-        runOnUiThread {
-            webViewManager.pushData("listeners", listeners)
+        webView.post {
+            webViewManager.pushData("onListenersUpdate", listeners)
         }
     }
 
     override fun onReactions(reactions: Int) {
-        runOnUiThread {
-            webViewManager.pushData("reactions", reactions)
+        webView.post {
+            webViewManager.pushData("onReactionsUpdate", reactions)
+        }
+    }
+
+    override fun onSocketConnect() {
+        webView.post {
+            webViewManager.pushData("socketConnect")
+        }
+    }
+
+    override fun onSocketDisconnect() {
+        webView.post {
+            webViewManager.pushData("socketDisconnect")
         }
     }
 
     override fun onSocketReconnectFailed() {
-        runOnUiThread {
-            noInternetReasonIsWebView = false
-            notifyNoInternet()
+        webView.post {
+            webViewManager.pushData("socketReconnectFailed")
         }
     }
 }
