@@ -29,6 +29,8 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.api.ApiClient
@@ -42,6 +44,7 @@ class PlayerService : MediaLibraryService() {
     private lateinit var player: Player
     private lateinit var mediaLibrarySession: MediaLibrarySession
     private lateinit var sleepTimer: CountDownTimer
+    private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
         return mediaLibrarySession.takeUnless { session ->
@@ -64,8 +67,9 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
-        closePlayer()
         super.onDestroy()
+        closePlayer()
+        serviceScope.cancel()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -235,7 +239,7 @@ class PlayerService : MediaLibraryService() {
     private fun updateSongMetadata() {
         updatingMetadata = true
 
-        CoroutineScope(Dispatchers.Default).launch(Dispatchers.IO) {
+        serviceScope.launch(Dispatchers.IO) {
             val client = ApiClient()
             val status: ApiClient.Status
 
