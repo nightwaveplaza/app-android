@@ -77,4 +77,9 @@ class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
     fun onReady() {
         callback.onReady()
     }
+
+    @JavascriptInterface
+    fun socketReconnect() {
+        callback.onReconnectRequest()
+    }
 }

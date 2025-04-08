@@ -14,5 +14,5 @@ interface WebViewCallback {
     fun onSetSleepTimer(timestamp: Long)
     fun onSetLanguage(lang: String)
     fun onReady()
-
+    fun onReconnectRequest()
 }

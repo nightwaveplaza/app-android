@@ -32,11 +32,11 @@ class WebViewManager(
     private val webView: WebView,
     private val lifecycle: Lifecycle,
 ) : LifecycleObserver {
-    val context = callback.getActivityContext()
 
     private var viewVersionJob: Job? = null
     var webViewLoaded = false
     private val webViewClient = CustomWebViewClient()
+    private val lifeCycleObserver = LifeCycleObserver()
 
     @SuppressLint("SetJavaScriptEnabled")
     fun initialize() {
@@ -57,7 +57,7 @@ class WebViewManager(
 
         webView.webViewClient = webViewClient
 
-        lifecycle.addObserver(LifeCycleObserver())
+        lifecycle.addObserver(lifeCycleObserver)
     }
 
     fun loadWebView() {
@@ -127,25 +127,27 @@ class WebViewManager(
             }
         }
 
-        //webViewPaused = true
         if (webViewLoaded) {
             webView.onPause()
         }
     }
 
     fun resumeWebView() {
-        //webViewPaused = false
         webView.onResume()
-
-//        if (webViewLoaded) {
-//            onWebViewLoaded()
-//        } else {
-//            loadWebView()
-//        }
+        pushData("onResume")
     }
 
-    fun pushData(action: String, payload: Any) {
+    fun destroy() {
+        viewVersionJob?.cancel()
+        webView.destroy()
+        lifecycle.removeObserver(lifeCycleObserver)
+    }
+
+    fun pushData(action: String, payload: Any? = null) {
         var call = "window['emitter'].emit('$action', $payload)"
+        if (payload == null) {
+            call = "window['emitter'].emit('$action')"
+        }
         if (payload is String) {
             call = "window['emitter'].emit('$action', '$payload')"
         }
@@ -167,7 +169,7 @@ class WebViewManager(
 
         private fun retryWithDelay(url: String) {
             lifecycle.coroutineScope.launch {
-                delay(3000)
+                delay(5000)
                 webView.loadUrl(url)
             }
         }
@@ -198,7 +200,7 @@ class WebViewManager(
             super.onPageFinished(view, url)
 
             if (loadError) {
-                webView.visibility = View.GONE
+                //webView.visibility = View.GONE
                 if (attempts < 3) {
                     retryWithDelay(url)
                     attempts += 1
@@ -227,11 +229,17 @@ class WebViewManager(
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
+                    println("WebView onResume")
                     resumeWebView()
                 }
 
                 Lifecycle.Event.ON_PAUSE -> {
+                    println("WebView onPause")
                     pauseWebView()
+                }
+
+                Lifecycle.Event.ON_DESTROY -> {
+                    destroy()
                 }
 
                 else -> {}
