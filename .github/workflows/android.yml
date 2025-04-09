@@ -6,9 +6,7 @@ env:
   RELEASE_SIGN_KEY_PASSWORD: ${{ secrets.RELEASE_SIGN_KEY_PASSWORD }}
 
 on:
-  push:
-    paths:
-      - 'app/build.gradle'
+  workflow_dispatch: null
 
 jobs:
   build:
@@ -71,6 +69,10 @@ jobs:
           name: Upload artifact
           path: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
 
+      - name: Get Commits since last Release
+        id: changes
+        uses: simbo/changes-since-last-release-action@v1
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
@@ -79,5 +81,8 @@ jobs:
           files: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
           draft: false
           prerelease: false
+          body: |
+            Changes since ${{ steps.changes.outputs.last-tag }}:
+            ${{ steps.changes.outputs.log }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
