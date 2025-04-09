@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.util.Log
 import android.view.View
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -41,9 +42,13 @@ class WebViewManager(
     @SuppressLint("SetJavaScriptEnabled")
     fun initialize() {
         val webSettings = webView.settings
-        webSettings.javaScriptEnabled = true
-        webSettings.textZoom = 100
-        webSettings.domStorageEnabled = true
+        webSettings.apply {
+            javaScriptEnabled = true
+            textZoom = 100
+            domStorageEnabled = true
+            blockNetworkImage = false
+            loadsImagesAutomatically = true
+        }
         webView.addJavascriptInterface(WebViewJavaScriptHandler(callback), "AndroidInterface")
         webView.setBackgroundColor(Color.TRANSPARENT)
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
@@ -68,24 +73,16 @@ class WebViewManager(
             return
         }
 
-        if (Settings.viewUri != "") {
-            webView.loadUrl(Settings.viewUri)
-            updateViewVersion(true)
-        } else {
-            updateViewVersion(false)
-        }
+        updateViewVersion()
     }
 
-    private fun updateViewVersion(silent: Boolean) {
+    private fun updateViewVersion() {
         if (BuildConfig.DEBUG) {
             return
         }
 
-        if (viewVersionJob?.isActive == true) {
-            return
-        }
-
-        viewVersionJob = lifecycle.coroutineScope.launch {
+        viewVersionJob?.cancel()
+        viewVersionJob = lifecycle.coroutineScope.launch(Dispatchers.IO) {
             val client = ApiClient()
             var version: ApiClient.Version? = null
             var attempts = 0
@@ -93,16 +90,15 @@ class WebViewManager(
             while (version == null && isActive && attempts < 4) {
                 try {
                     version = client.getVersion()
-                } catch (_: Exception) {
-                    if (!silent) {
-                        callback.onWebViewLoadFail()
-                    }
+                } catch (e: Exception) {
+                    Log.e("Nightwave Plaza", "UpdateException", e)
                     delay(5000)
                     attempts += 1
                 }
             }
 
             if (version == null) {
+                callback.onWebViewLoadFail()
                 return@launch
             }
 
@@ -111,6 +107,7 @@ class WebViewManager(
                     webView.clearCache(true)
                     Settings.viewUri = version.viewSrc
                 }
+
                 webView.stopLoading()
                 webView.loadUrl(Settings.viewUri)
             }
@@ -182,7 +179,7 @@ class WebViewManager(
                 return false
             }
 
-            return if (!request.url.toString().startsWith("https://m.plaza.one")) {
+            return if (!request.url.toString().startsWith("https://m2.plaza.one")) {
                 val intent = Intent(Intent.ACTION_VIEW, request.url)
                 view.context.startActivity(intent)
                 true
@@ -198,6 +195,10 @@ class WebViewManager(
 
         override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
+
+            if (view.progress < 100) {
+                return
+            }
 
             if (loadError) {
                 //webView.visibility = View.GONE

@@ -17,6 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#008080"
+            android:scaleType="centerCrop"
             android:contentDescription="@string/background_image"
         />
 
@@ -31,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#008080"
-            android:contentDescription="Loading image"
+            android:contentDescription="@string/loading_image"
         />
 
 

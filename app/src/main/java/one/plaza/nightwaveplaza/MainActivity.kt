@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.DialogInterface.OnClickListener
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
@@ -39,7 +40,6 @@ import one.plaza.nightwaveplaza.socket.SocketClient
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
 import java.util.Locale
-import kotlin.system.exitProcess
 
 
 @UnstableApi
@@ -57,6 +57,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private lateinit var socketClient: SocketClient
 
     private lateinit var status: ApiClient.Status
+    private var backgroundImageSrc = "solid"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,8 +99,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     fun pushStatus() {
-        runOnUiThread {
-            if (::status.isInitialized) {
+        if (::status.isInitialized) {
+            webView.post {
                 webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
             }
         }
@@ -127,10 +128,21 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         super.onDestroy()
         webView.apply {
             stopLoading()
+            loadUrl("about:blank")
+            removeAllViews()
             destroy()
         }
-        Glide.with(this).clear(bgPlayerView!!)
-        Glide.with(this).clear(loadingImage!!)
+
+        controllerFuture.let {
+            if (it.isDone) {
+                it.get()?.removeListener(playerListener)
+                it.get()?.release()
+            }
+            MediaController.releaseFuture(it)
+        }
+
+        bgPlayerView?.let { Glide.with(this).clear(it) }
+        loadingImage?.let { Glide.with(this).clear(it) }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -257,11 +269,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     fun pushPlaybackState() {
-        runOnUiThread {
+        webView.post {
             if (controller != null) {
-                webViewManager.pushData("isPlaying", controller!!.isPlaying.toString())
+                println(controller!!.isPlaying.toString())
+                webViewManager.pushData("isPlaying", controller!!.isPlaying)
             }
-            webViewManager.pushData("sleepTime", Settings.sleepTime.toString())
+            webViewManager.pushData("sleepTime", Settings.sleepTime)
         }
     }
 
@@ -319,12 +332,30 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
-    override fun onSetBackground(backgroundSrc: String) {
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        loadBackground()
+    }
+
+    fun loadBackground() {
         runOnUiThread {
-            if (backgroundSrc != "solid") {
-                Glide.with(this).load(backgroundSrc).fitCenter().into(bgPlayerView!!)
-            } else {
+            if (backgroundImageSrc != "solid") {
+                Glide.with(this)
+                    .load(backgroundImageSrc)
+                    .override(bgPlayerView!!.width, bgPlayerView!!.height)
+                    .fitCenter()
+                    .into(bgPlayerView!!)
+            }
+        }
+    }
+
+    override fun onSetBackground(backgroundSrc: String) {
+        backgroundImageSrc = backgroundSrc
+        runOnUiThread {
+            if (backgroundSrc == "solid") {
                 Glide.with(this).clear(bgPlayerView!!)
+            } else {
+                loadBackground()
             }
         }
     }

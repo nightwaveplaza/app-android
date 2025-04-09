@@ -1,5 +1,6 @@
 package one.plaza.nightwaveplaza.api
 
+import android.util.Log
 import androidx.annotation.Keep
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -37,14 +38,17 @@ class ApiClient {
     )
 
     @Keep data class Version(
+        @SerializedName("view_version")
         var viewVersion: Int = 0,
+        @SerializedName("android_min_ver")
         var androidMinVersion: Int = 0,
+        @SerializedName("ios_min_ver")
         var iOsMinVersion: Int = 0,
         @SerializedName("view_src")
         var viewSrc: String = ""
     )
 
-    private val baseUrl = "https://api.plaza.one/"
+    private val baseUrl = "https://api.plaza.one/v2"
 
     private var client: OkHttpClient = createClient()
 
@@ -99,6 +103,7 @@ class ApiClient {
                 resp = response.body?.string()
             }
         } catch (err: IOException) {
+            Log.e(ApiClient::class.toString(), err.message.toString())
             throw Exception("Network exception")
         }
 

@@ -2,9 +2,10 @@ package one.plaza.nightwaveplaza
 
 import android.app.PendingIntent
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
+import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
@@ -32,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.helpers.Keys
@@ -46,13 +48,14 @@ class PlayerService : MediaLibraryService() {
     private lateinit var sleepTimer: CountDownTimer
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private var isSessionReleased = false
+
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
-        return mediaLibrarySession.takeUnless { session ->
-            session.invokeIsReleased
-        }.also {
-            if (it == null) {
-                println("onGetSession returns null because the session is already released")
-            }
+        return if (!isSessionReleased) {
+            mediaLibrarySession
+        } else {
+            Log.w("PlayerService", "onGetSession returns null because the session is already released")
+            null
         }
     }
 
@@ -70,6 +73,7 @@ class PlayerService : MediaLibraryService() {
         super.onDestroy()
         closePlayer()
         serviceScope.cancel()
+        Settings.isPlaying = false
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
@@ -79,15 +83,22 @@ class PlayerService : MediaLibraryService() {
             closePlayer()
             stopSelf()
         }
+
+        Settings.isPlaying = false
     }
 
     private fun closePlayer() {
         Settings.isPlaying = false
         Settings.sleepTime = 0L
+
+        if (::sleepTimer.isInitialized) {
+            sleepTimer.cancel()
+        }
+
         player.removeListener(playerListener)
         player.release()
         mediaLibrarySession.release()
-
+        isSessionReleased = true
     }
 
     private fun initializePlayer() {
@@ -145,10 +156,13 @@ class PlayerService : MediaLibraryService() {
         ).apply {
             setSessionActivity(pendingIntent)
         }.build()
+
+        isSessionReleased = false
     }
 
     private inner class CustomNotificationProvider :
         DefaultMediaNotificationProvider(this@PlayerService) {
+
         override fun getMediaButtons(
             session: MediaSession,
             playerCommands: Player.Commands,
@@ -235,9 +249,9 @@ class PlayerService : MediaLibraryService() {
         }
     }
 
-    private var updatingMetadata = false
+    private val metadataUpdating = Mutex()
     private fun updateSongMetadata() {
-        updatingMetadata = true
+        if (!metadataUpdating.tryLock()) return
 
         serviceScope.launch(Dispatchers.IO) {
             val client = ApiClient()
@@ -247,11 +261,10 @@ class PlayerService : MediaLibraryService() {
                 status = client.getStatus()
             } catch (err: Exception) {
                 println("updating: network exception")
-                updatingMetadata = false
                 return@launch
+            } finally {
+                metadataUpdating.unlock()
             }
-
-            updatingMetadata = false
 
             if (status.song.id.isNotEmpty()) {
                 withContext(Dispatchers.Main) {
@@ -259,7 +272,7 @@ class PlayerService : MediaLibraryService() {
                     val mb = mi.buildUpon()
                         .setArtist(status.song.artist)
                         .setTitle(status.song.title)
-                        .setArtworkUri(Uri.parse(status.song.artworkSrc))
+                        .setArtworkUri(status.song.artworkSrc.toUri())
                         .build()
                     player.replaceMediaItem(
                         player.currentMediaItemIndex,
@@ -332,15 +345,3 @@ class PlayerService : MediaLibraryService() {
         return fwPlayer
     }
 }
-
-private val MediaSession.invokeIsReleased: Boolean
-    get() = try {
-        // temporarily checked to debug
-        // https://github.com/androidx/media/issues/422
-        MediaSession::class.java.getDeclaredMethod("isReleased")
-            .apply { isAccessible = true }
-            .invoke(this) as Boolean
-    } catch (e: Exception) {
-        println("Couldn't check if it's released")
-        false
-    }

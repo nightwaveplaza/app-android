@@ -14,18 +14,18 @@ class NightwavePlaza : Application() {
         super.onCreate()
         initStorage()
 
-//        if (BuildConfig.ACRA_URI.isNotEmpty()) {
-//            initAcra {
-//                buildConfigClass = BuildConfig::class.java
-//                reportFormat = StringFormat.JSON
-//
-//                httpSender {
-//                    uri = BuildConfig.ACRA_URI
-//                    basicAuthLogin = BuildConfig.ACRA_LOGIN
-//                    basicAuthPassword = BuildConfig.ACRA_PASS
-//                    httpMethod = HttpSender.Method.POST
-//                }
-//            }
-//        }
+        if (BuildConfig.ACRA_URI.isNotEmpty() && !BuildConfig.DEBUG) {
+            initAcra {
+                buildConfigClass = BuildConfig::class.java
+                reportFormat = StringFormat.JSON
+
+                httpSender {
+                    uri = BuildConfig.ACRA_URI
+                    basicAuthLogin = BuildConfig.ACRA_LOGIN
+                    basicAuthPassword = BuildConfig.ACRA_PASS
+                    httpMethod = HttpSender.Method.POST
+                }
+            }
+        }
     }
 }
