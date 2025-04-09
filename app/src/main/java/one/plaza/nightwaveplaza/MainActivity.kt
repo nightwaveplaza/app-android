@@ -107,9 +107,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
     private fun pushStatus() {
         if (::status.isInitialized) {
-            webView.post {
-                webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
-            }
+            webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
         } else {
             Timber.d("Attempt to push status not initialized yet.")
         }
@@ -192,8 +190,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private var playerListener: Player.Listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            webViewManager.pushData("isPlaying", isPlaying.toString())
-            webViewManager.pushData("sleepTime", Settings.sleepTime.toString())
+            webViewManager.pushData("isPlaying", isPlaying)
+            webViewManager.pushData("sleepTime", Settings.sleepTime)
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -268,12 +266,10 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     private fun pushPlaybackState() {
-        webView.post {
-            if (controller != null) {
-                webViewManager.pushData("isPlaying", controller!!.isPlaying)
-            }
-            webViewManager.pushData("sleepTime", Settings.sleepTime)
+        if (controller != null) {
+            webViewManager.pushData("isPlaying", controller!!.isPlaying)
         }
+        webViewManager.pushData("sleepTime", Settings.sleepTime)
     }
 
     private fun notifyNoInternet() {
@@ -304,13 +300,14 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private fun loadBackground() {
         runOnUiThread {
             if (backgroundImageSrc != "solid") {
-
                 Glide.with(this)
                     .load(backgroundImageSrc)
                     .override(bgPlayerView!!.width, bgPlayerView!!.height)
                     .fitCenter()
                     .transition(withCrossFade())
                     .into(bgPlayerView!!)
+            } else {
+                bgPlayerView?.let { Glide.with(this).clear(it) }
             }
         }
     }
@@ -396,32 +393,24 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onListeners(listeners: Int) {
-        webView.post {
-            webViewManager.pushData("onListenersUpdate", listeners)
-        }
+        webViewManager.pushData("onListenersUpdate", listeners)
     }
 
     override fun onReactions(reactions: Int) {
-        webView.post {
-            webViewManager.pushData("onReactionsUpdate", reactions)
-        }
+        webViewManager.pushData("onReactionsUpdate", reactions)
     }
 
     override fun onSocketConnect() {
-        webView.post {
-            webViewManager.pushData("socketConnect")
-        }
+        webViewManager.pushData("socketConnect")
     }
 
     override fun onSocketDisconnect() {
-        webView.post {
-            webViewManager.pushData("socketDisconnect")
-        }
+        webViewManager.pushData("socketDisconnect")
     }
 
     override fun onSocketReconnectFailed() {
-        webView.post {
-            webViewManager.pushData("socketReconnectFailed")
-        }
+
+        webViewManager.pushData("socketReconnectFailed")
+
     }
 }

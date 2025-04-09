@@ -148,7 +148,9 @@ class WebViewManager(
         if (payload is String) {
             call = "window['emitter'].emit('$action', '$payload')"
         }
-        webView.evaluateJavascript(call, null)
+        webView.post {
+            webView.evaluateJavascript(call, null)
+        }
     }
 
     fun onWebViewLoaded() {
