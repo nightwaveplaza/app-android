@@ -22,8 +22,8 @@ android {
         applicationId 'one.plaza.nightwaveplaza'
         minSdk 21
         targetSdkVersion 35
-        versionCode 230
-        versionName '2.0.9'
+        versionCode 231
+        versionName '2.1.0'
 
         buildFeatures {
             buildConfig true
