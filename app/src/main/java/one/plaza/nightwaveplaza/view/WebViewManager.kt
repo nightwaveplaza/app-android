@@ -68,8 +68,8 @@ class WebViewManager(
     fun loadWebView() {
         webViewClient.resetAttempts()
 
-        if (BuildConfig.DEBUG) {
-            webView.loadUrl("http://plaza.local:4173")
+        if (BuildConfig.PLAZA_URL_OVERRIDE.isNotEmpty()) {
+            webView.loadUrl(BuildConfig.PLAZA_URL_OVERRIDE)
             return
         }
 
@@ -77,10 +77,6 @@ class WebViewManager(
     }
 
     private fun updateViewVersion() {
-        if (BuildConfig.DEBUG) {
-            return
-        }
-
         viewVersionJob?.cancel()
         viewVersionJob = lifecycle.coroutineScope.launch(Dispatchers.IO) {
             val client = ApiClient()
@@ -179,7 +175,7 @@ class WebViewManager(
                 return false
             }
 
-            return if (!request.url.toString().startsWith("https://m2.plaza.one")) {
+            return if (!request.url.toString().startsWith("https://m.plaza.one")) {
                 val intent = Intent(Intent.ACTION_VIEW, request.url)
                 view.context.startActivity(intent)
                 true

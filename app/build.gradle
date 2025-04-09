@@ -8,6 +8,11 @@ Properties acraProperties = new Properties()
 if (project.rootProject.file('acra.properties').canRead()) {
     acraProperties.load(project.rootProject.file('acra.properties').newDataInputStream())
 }
+// Load acra local properties
+Properties plazaProperties = new Properties()
+if (project.rootProject.file('plaza.properties').canRead()) {
+    plazaProperties.load(project.rootProject.file('plaza.properties').newDataInputStream())
+}
 
 android {
     namespace 'one.plaza.nightwaveplaza'
@@ -17,7 +22,7 @@ android {
         applicationId 'one.plaza.nightwaveplaza'
         minSdk 21
         targetSdkVersion 35
-        versionCode 229
+        versionCode 230
         versionName '2.0.9'
 
         buildFeatures {
@@ -31,6 +36,8 @@ android {
         buildConfigField 'String', 'ACRA_URI', acraProperties.getProperty('ACRA_URI', '""')
         buildConfigField 'String', 'ACRA_LOGIN', acraProperties.getProperty('ACRA_LOGIN', '""')
         buildConfigField 'String', 'ACRA_PASS', acraProperties.getProperty('ACRA_PASS', '""')
+        buildConfigField 'String', 'PLAZA_API', plazaProperties.getProperty('PLAZA_API', '""')
+        buildConfigField 'String', 'PLAZA_URL_OVERRIDE', plazaProperties.getProperty('PLAZA_URL_OVERRIDE', '""')
     }
 
     signingConfigs {
@@ -41,7 +48,6 @@ android {
             keyPassword System.getenv('RELEASE_SIGN_KEY_PASSWORD')
         }
     }
-
 
     buildTypes {
         release {
