@@ -10,8 +10,6 @@ import one.plaza.nightwaveplaza.helpers.Utils
 
 @UnstableApi
 class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
-    val context: Context = callback.getActivityContext()
-
     @JavascriptInterface
     fun openDrawer() {
         callback.onOpenDrawer()
@@ -60,6 +58,7 @@ class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
     @JavascriptInterface
     fun getAppVersion(): String {
         try {
+            val context: Context = callback.getActivityContext()
             val pInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             return pInfo.versionName + " (build " + pInfo.versionCode + ")"
         } catch (e: PackageManager.NameNotFoundException) {

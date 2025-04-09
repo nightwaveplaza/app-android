@@ -8,6 +8,7 @@ import io.socket.client.IO
 import io.socket.client.Manager
 import io.socket.client.Socket
 import org.json.JSONObject
+import timber.log.Timber
 import java.net.URISyntaxException
 
 class SocketClient(
@@ -37,10 +38,12 @@ class SocketClient(
     }
 
     fun connect() {
+        Timber.d("Socket: Connect attempt")
         socket?.connect()
     }
 
     fun disconnect() {
+        Timber.d("Socket: Disconnect attempt")
         socket?.disconnect()
     }
 
@@ -63,15 +66,18 @@ class SocketClient(
             (args.getOrNull(0) as? Int)?.let {
                 callback.onReactions(it)
             }
-        }?.on("connect") { args ->
+        }?.on("connect") { _ ->
+            Timber.d("Socket: Connected")
             isConnected = true
             callback.onSocketConnect()
-        }?.on("disconnect")  { args ->
+        }?.on("disconnect")  { _ ->
+            Timber.d("Socket: Disconnected")
             isConnected = false
             callback.onSocketDisconnect()
         }
 
         socket?.io()?.on(Manager.EVENT_RECONNECT_FAILED) {
+            Timber.d("Socket: Reconnect failed")
             callback.onSocketReconnectFailed()
         }
     }
@@ -80,14 +86,17 @@ class SocketClient(
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             when (event) {
                 Lifecycle.Event.ON_DESTROY -> {
+                    Timber.d("Lifecycle: onDestroy")
                     destroy()
                 }
 
                 Lifecycle.Event.ON_RESUME -> {
+                    Timber.d("Lifecycle: onResume")
                     connect()
                 }
 
                 Lifecycle.Event.ON_PAUSE -> {
+                    Timber.d("Lifecycle: onPause")
                     disconnect()
                 }
 

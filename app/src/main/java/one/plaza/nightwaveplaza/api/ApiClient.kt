@@ -48,7 +48,7 @@ class ApiClient {
         var viewSrc: String = ""
     )
 
-    private val baseUrl = "https://api.plaza.one/v2"
+    private val baseUrl = BuildConfig.PLAZA_API
 
     private var client: OkHttpClient = createClient()
 

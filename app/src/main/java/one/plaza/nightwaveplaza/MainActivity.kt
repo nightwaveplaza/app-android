@@ -27,6 +27,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -39,6 +40,7 @@ import one.plaza.nightwaveplaza.socket.SocketCallback
 import one.plaza.nightwaveplaza.socket.SocketClient
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
+import timber.log.Timber
 import java.util.Locale
 
 
@@ -96,42 +98,43 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             lifecycle = lifecycle
         )
         socketClient.initialize()
+
+        WindowCompat.setDecorFitsSystemWindows(
+            window,
+            false
+        )
     }
 
-    fun pushStatus() {
+    private fun pushStatus() {
         if (::status.isInitialized) {
             webView.post {
                 webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
             }
+        } else {
+            Timber.d("Attempt to push status not initialized yet.")
         }
     }
 
     override fun onStart() {
         super.onStart()
-        println("onStart")
         initializeController()
+        Timber.d("Lifecycle: onStart")
     }
 
     override fun onStop() {
         super.onStop()
-        println("onStop")
         releaseController()
+        Timber.d("Lifecycle: onStop")
     }
 
     override fun onResume() {
         super.onResume()
-        println("onResume")
         setFullscreen()
+        Timber.d("Lifecycle: onResume")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        webView.apply {
-            stopLoading()
-            loadUrl("about:blank")
-            removeAllViews()
-            destroy()
-        }
 
         controllerFuture.let {
             if (it.isDone) {
@@ -203,7 +206,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
             webViewManager.pushData("isPlaying", "false")
-            // TODO: toast
+            Timber.e(error)
         }
     }
 
@@ -241,7 +244,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         })
     }
 
-    fun setLanguage(lang: String) {
+    private fun setLanguage(lang: String) {
         // Don't react to change to the same language
         val loc: Locale = if (lang.contains('-')) {
             Locale(
@@ -258,27 +261,22 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
         Settings.language = loc.language
 
-        // As locale triggers activity lifecycle, set webview as not loaded
-        // TODO change without reload
-        //webViewLoaded = false
-
         // Set application locale
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(loc.language)
         )
     }
 
-    fun pushPlaybackState() {
+    private fun pushPlaybackState() {
         webView.post {
             if (controller != null) {
-                println(controller!!.isPlaying.toString())
                 webViewManager.pushData("isPlaying", controller!!.isPlaying)
             }
             webViewManager.pushData("sleepTime", Settings.sleepTime)
         }
     }
 
-    fun notifyNoInternet() {
+    private fun notifyNoInternet() {
         val alertBuilder = AlertDialog.Builder(this)
         alertBuilder
             .setTitle("No Connection")
@@ -301,6 +299,20 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private fun stopLoadingAnimation() {
         loadingImage?.visibility = View.GONE
         Glide.with(this).clear(loadingImage!!)
+    }
+
+    private fun loadBackground() {
+        runOnUiThread {
+            if (backgroundImageSrc != "solid") {
+
+                Glide.with(this)
+                    .load(backgroundImageSrc)
+                    .override(bgPlayerView!!.width, bgPlayerView!!.height)
+                    .fitCenter()
+                    .transition(withCrossFade())
+                    .into(bgPlayerView!!)
+            }
+        }
     }
 
     override fun getActivityContext(): Context = this
@@ -335,18 +347,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         loadBackground()
-    }
-
-    fun loadBackground() {
-        runOnUiThread {
-            if (backgroundImageSrc != "solid") {
-                Glide.with(this)
-                    .load(backgroundImageSrc)
-                    .override(bgPlayerView!!.width, bgPlayerView!!.height)
-                    .fitCenter()
-                    .into(bgPlayerView!!)
-            }
-        }
     }
 
     override fun onSetBackground(backgroundSrc: String) {

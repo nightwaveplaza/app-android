@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.util.Log
+import android.os.Build
 import android.view.View
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.api.ApiClient
+import timber.log.Timber
 
 @UnstableApi
 class WebViewManager(
@@ -68,8 +69,8 @@ class WebViewManager(
     fun loadWebView() {
         webViewClient.resetAttempts()
 
-        if (BuildConfig.DEBUG) {
-            webView.loadUrl("http://plaza.local:4173")
+        if (BuildConfig.PLAZA_URL_OVERRIDE.isNotEmpty()) {
+            webView.loadUrl(BuildConfig.PLAZA_URL_OVERRIDE)
             return
         }
 
@@ -77,10 +78,6 @@ class WebViewManager(
     }
 
     private fun updateViewVersion() {
-        if (BuildConfig.DEBUG) {
-            return
-        }
-
         viewVersionJob?.cancel()
         viewVersionJob = lifecycle.coroutineScope.launch(Dispatchers.IO) {
             val client = ApiClient()
@@ -91,7 +88,7 @@ class WebViewManager(
                 try {
                     version = client.getVersion()
                 } catch (e: Exception) {
-                    Log.e("Nightwave Plaza", "UpdateException", e)
+                    Timber.e(e)
                     delay(5000)
                     attempts += 1
                 }
@@ -131,12 +128,15 @@ class WebViewManager(
 
     fun resumeWebView() {
         webView.onResume()
-        pushData("onResume")
     }
 
     fun destroy() {
+        webView.apply {
+            stopLoading()
+            removeAllViews()
+            destroy()
+        }
         viewVersionJob?.cancel()
-        webView.destroy()
         lifecycle.removeObserver(lifeCycleObserver)
     }
 
@@ -166,7 +166,8 @@ class WebViewManager(
 
         private fun retryWithDelay(url: String) {
             lifecycle.coroutineScope.launch {
-                delay(5000)
+                delay(3000)
+                Timber.d("Retrying load...")
                 webView.loadUrl(url)
             }
         }
@@ -179,7 +180,7 @@ class WebViewManager(
                 return false
             }
 
-            return if (!request.url.toString().startsWith("https://m2.plaza.one")) {
+            return if (!request.url.toString().startsWith("https://m.plaza.one")) {
                 val intent = Intent(Intent.ACTION_VIEW, request.url)
                 view.context.startActivity(intent)
                 true
@@ -191,6 +192,7 @@ class WebViewManager(
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
             loadError = false
+            Timber.d("onPageStarted")
         }
 
         override fun onPageFinished(view: WebView, url: String) {
@@ -200,7 +202,10 @@ class WebViewManager(
                 return
             }
 
+            Timber.d("onPageFinished (100)")
+
             if (loadError) {
+                Timber.d("Load error")
                 //webView.visibility = View.GONE
                 if (attempts < 3) {
                     retryWithDelay(url)
@@ -209,6 +214,7 @@ class WebViewManager(
                     callback.onWebViewLoadFail()
                 }
             } else {
+                Timber.d("Webview loaded")
                 attempts = 0
                 view.visibility = View.VISIBLE
                 onWebViewLoaded()
@@ -222,21 +228,23 @@ class WebViewManager(
         ) {
             super.onReceivedError(view, request, error)
             loadError = true
+            if (error != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Timber.e(error.description.toString())
+            }
         }
-
     }
 
     inner class LifeCycleObserver : LifecycleEventObserver {
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             when (event) {
                 Lifecycle.Event.ON_RESUME -> {
-                    println("WebView onResume")
                     resumeWebView()
+                    Timber.d("Lifecycle: onResume")
                 }
 
                 Lifecycle.Event.ON_PAUSE -> {
-                    println("WebView onPause")
                     pauseWebView()
+                    Timber.d("Lifecycle: onPause")
                 }
 
                 Lifecycle.Event.ON_DESTROY -> {
