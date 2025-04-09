@@ -118,6 +118,7 @@ dependencies {
         exclude group: 'org.json', module: 'json'
     }
 
+    implementation 'com.jakewharton.timber:timber:5.0.1'
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
 }
 

@@ -6,6 +6,7 @@ import org.acra.config.httpSender
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 import org.acra.sender.HttpSender
+import timber.log.Timber
 
 class NightwavePlaza : Application() {
 
@@ -13,6 +14,10 @@ class NightwavePlaza : Application() {
     override fun onCreate() {
         super.onCreate()
         initStorage()
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
 
         if (BuildConfig.ACRA_URI.isNotEmpty() && !BuildConfig.DEBUG) {
             initAcra {

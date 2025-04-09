@@ -11,6 +11,7 @@
 
     <application
         android:name=".NightwavePlaza"
+        android:theme="@style/NormalTheme"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -25,8 +26,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
