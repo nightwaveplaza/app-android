@@ -94,8 +94,10 @@ class PlayerService : MediaLibraryService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        sleepTimer.cancel()
         serviceScope.cancel()
+        if (::sleepTimer.isInitialized) {
+            sleepTimer.cancel()
+        }
         closePlayer()
         Settings.isPlaying = false
     }
