@@ -134,6 +134,7 @@ class WebViewManager(
         webView.apply {
             stopLoading()
             removeAllViews()
+            loadUrl("about:blank")
             destroy()
         }
         viewVersionJob?.cancel()

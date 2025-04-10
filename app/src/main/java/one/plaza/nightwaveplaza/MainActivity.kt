@@ -27,6 +27,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private lateinit var controllerFuture: ListenableFuture<MediaController>
     private lateinit var activity: AppCompatActivity
     private lateinit var webView: WebView
+    private var glideRequestManager: RequestManager? = null
     private var bgPlayerView: ImageView? = null
     private var loadingImage: ImageView? = null
     private var drawer: DrawerLayout? = null
@@ -80,7 +82,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         bgPlayerView = findViewById(R.id.bg_view)
         drawer = findViewById(R.id.drawer)
         loadingImage = findViewById(R.id.loading_gif)
-        Glide.with(this).load(R.raw.hourglass).into(loadingImage!!)
+        glideRequestManager = Glide.with(this)
+        glideRequestManager?.load(R.raw.hourglass)?.into(loadingImage!!)
 
         setupDrawer()
         setBackButtonCallback()
@@ -142,8 +145,10 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             MediaController.releaseFuture(it)
         }
 
-        bgPlayerView?.let { Glide.with(this).clear(it) }
-        loadingImage?.let { Glide.with(this).clear(it) }
+        glideRequestManager?.let { manager ->
+            bgPlayerView?.let { manager.clear(it) }
+            loadingImage?.let { manager.clear(it) }
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -243,25 +248,22 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     private fun setLanguage(lang: String) {
-        // Don't react to change to the same language
-        val loc: Locale = if (lang.contains('-')) {
-            Locale(
-                lang.substring(0, lang.indexOf('-')),
-                lang.substring(lang.indexOf('-') + 1, lang.length)
-            )
-        } else {
-            Locale(lang)
-        }
+        val parts = lang.split("-")
+        val language = parts[0]
+        val region = if (parts.size > 1) parts[1] else ""
 
-        if (Settings.language == loc.language) {
+        val locale = if (region.isNotEmpty()) Locale(language, region) else Locale(language)
+
+        // Don't react to change to the same language
+        if (Settings.language == locale.toLanguageTag()) {
             return
         }
 
-        Settings.language = loc.language
+        Settings.language = locale.toLanguageTag()
 
         // Set application locale
         AppCompatDelegate.setApplicationLocales(
-            LocaleListCompat.forLanguageTags(loc.language)
+            LocaleListCompat.forLanguageTags(locale.toLanguageTag())
         )
     }
 
