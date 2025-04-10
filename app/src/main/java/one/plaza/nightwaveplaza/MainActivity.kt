@@ -44,28 +44,35 @@ import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
 import java.util.Locale
 
-
+/**
+ * Main activity that integrates the web UI, socket connection and media playback.
+ * Handles the communication between UI interactions, WebView, Socket and the background player service.
+ */
 @UnstableApi
 class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
+    // Controller for media playback operations
     private val controller: MediaController?
         get() = if (controllerFuture.isDone) controllerFuture.get() else null
     private lateinit var controllerFuture: ListenableFuture<MediaController>
-    private lateinit var activity: AppCompatActivity
-    private lateinit var webView: WebView
-    private var glideRequestManager: RequestManager? = null
-    private var bgPlayerView: ImageView? = null
-    private var loadingImage: ImageView? = null
-    private var drawer: DrawerLayout? = null
 
+    // WebView manager
     private lateinit var webViewManager: WebViewManager
+    private lateinit var webView: WebView
+
+    // ImageViewer and backgrounds
+    private var backgroundImageSrc = "solid"
+    private lateinit var bgPlayerView: ImageView
+    private lateinit var loadingImage: ImageView
+    private lateinit var drawer: DrawerLayout
+    private var glideRequestManager: RequestManager? = null
+
+    // Socket client
     private lateinit var socketClient: SocketClient
 
-    private lateinit var status: ApiClient.Status
-    private var backgroundImageSrc = "solid"
+    private var status: ApiClient.Status? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        activity = this
 
         // Button binding
         val activityMainBinding: ActivityMainBinding = ActivityMainBinding.inflate(layoutInflater)
@@ -78,16 +85,18 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         activityMainBinding.nav.support.setOnClickListener { v: View -> showWindow(v) }
         setContentView(activityMainBinding.root)
 
-        webView = findViewById(R.id.webview)
         bgPlayerView = findViewById(R.id.bg_view)
-        drawer = findViewById(R.id.drawer)
         loadingImage = findViewById(R.id.loading_gif)
         glideRequestManager = Glide.with(this)
-        glideRequestManager?.load(R.raw.hourglass)?.into(loadingImage!!)
+        glideRequestManager?.load(R.raw.hourglass)?.into(loadingImage)
 
+        drawer = findViewById(R.id.drawer)
         setupDrawer()
+
         setBackButtonCallback()
 
+        // WebView initialization
+        webView = findViewById(R.id.webview)
         webViewManager = WebViewManager(
             callback = this,
             webView = webView,
@@ -96,25 +105,17 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         webViewManager.initialize()
         webViewManager.loadWebView()
 
+        // Socket initialization
         socketClient = SocketClient(
             callback = this,
             lifecycle = lifecycle
         )
         socketClient.initialize()
-
-        WindowCompat.setDecorFitsSystemWindows(
-            window,
-            false
-        )
     }
 
-    private fun pushStatus() {
-        if (::status.isInitialized) {
-            webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
-        } else {
-            Timber.d("Attempt to push status not initialized yet.")
-        }
-    }
+    /**
+     * Lifecycle methods to handle controller initialization and cleanup
+     */
 
     override fun onStart() {
         super.onStart()
@@ -134,9 +135,15 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         Timber.d("Lifecycle: onResume")
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        loadBackground()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 
+        // Clean up resources
         controllerFuture.let {
             if (it.isDone) {
                 it.get()?.removeListener(playerListener)
@@ -146,11 +153,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
 
         glideRequestManager?.let { manager ->
-            bgPlayerView?.let { manager.clear(it) }
-            loadingImage?.let { manager.clear(it) }
+            bgPlayerView.let { manager.clear(it) }
+            loadingImage.let { manager.clear(it) }
         }
     }
 
+    // WebView state preservation
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         webView.saveState(outState)
@@ -161,37 +169,48 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         webView.restoreState(savedInstanceState)
     }
 
+    /**
+     * Configure navigation drawer
+     */
     private fun setupDrawer() {
         val navigationView = findViewById<NavigationView>(R.id.navView)
         navigationView.setOnApplyWindowInsetsListener { _: View?, insets: WindowInsets? -> insets!! }
-        drawer?.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.START)
+        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.START)
 //        drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-        drawer?.drawerElevation = 0f
+        drawer.drawerElevation = 0f
     }
 
+    /**
+     * Initialize media controller with the player service
+     */
     @UnstableApi
     private fun initializeController() {
         controllerFuture = MediaController.Builder(
-            activity as Context,
-            SessionToken(
-                activity as Context,
-                ComponentName(activity as Context, PlayerService::class.java)
-            )
+            this, SessionToken(this, ComponentName(this, PlayerService::class.java))
         ).buildAsync()
         controllerFuture.addListener({ setupController() }, MoreExecutors.directExecutor())
     }
 
+    /**
+     * Configure controller with listener
+     */
     private fun setupController() {
         val controller: MediaController = this.controller ?: return
         controller.addListener(playerListener)
     }
 
+    /**
+     * Clean up media controller resources
+     */
     private fun releaseController() {
         MediaController.releaseFuture(controllerFuture)
         controller?.removeListener(playerListener)
         controller?.release()
     }
 
+    /**
+     * Media player state listener to sync UI with playback state
+     */
     private var playerListener: Player.Listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
@@ -213,6 +232,20 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
+    /**
+     * Push current status to the WebView if available
+     */
+    private fun pushStatus() {
+        if (status != null) {
+            webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
+        } else {
+            Timber.d("Attempt to push status not initialized yet.")
+        }
+    }
+
+    /**
+     * Apply fullscreen mode based on current settings
+     */
     private fun setFullscreen() {
         if (Settings.fullScreen) {
             WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -230,12 +263,18 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
+    /**
+     * Show window in WebView based on navigation item selected
+     */
     private fun showWindow(view: View) {
         val window = view.tag.toString()
         webViewManager.pushData("openWindow", window)
-        drawer?.closeDrawers()
+        drawer.closeDrawers()
     }
 
+    /**
+     * Override back button to go home instead of closing activity
+     */
     private fun setBackButtonCallback() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -247,6 +286,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         })
     }
 
+    /**
+     * Apply language setting and update app locale
+     */
     private fun setLanguage(lang: String) {
         val parts = lang.split("-")
         val language = parts[0]
@@ -267,6 +309,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         )
     }
 
+    /**
+     * Update WebView with current playback state
+     */
     private fun pushPlaybackState() {
         if (controller != null) {
             webViewManager.pushData("isPlaying", controller!!.isPlaying)
@@ -274,6 +319,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         webViewManager.pushData("sleepTime", Settings.sleepTime)
     }
 
+    /**
+     * Show no internet connection dialog
+     */
     private fun notifyNoInternet() {
         val alertBuilder = AlertDialog.Builder(this)
         alertBuilder
@@ -294,25 +342,35 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         alertBuilder.create().show()
     }
 
+    /**
+     * Hide loading animation
+     */
     private fun stopLoadingAnimation() {
-        loadingImage?.visibility = View.GONE
-        Glide.with(this).clear(loadingImage!!)
+        loadingImage.visibility = View.GONE
+        glideRequestManager?.clear(loadingImage)
     }
 
+    /**
+     * Load background image or clear it if set to solid
+     */
     private fun loadBackground() {
         runOnUiThread {
             if (backgroundImageSrc != "solid") {
                 Glide.with(this)
                     .load(backgroundImageSrc)
-                    .override(bgPlayerView!!.width, bgPlayerView!!.height)
+                    .override(bgPlayerView.width, bgPlayerView.height)
                     .fitCenter()
                     .transition(withCrossFade())
-                    .into(bgPlayerView!!)
+                    .into(bgPlayerView)
             } else {
-                bgPlayerView?.let { Glide.with(this).clear(it) }
+                glideRequestManager?.clear(bgPlayerView)
             }
         }
     }
+
+    /**
+     * WebView callback implementations
+     */
 
     override fun getActivityContext(): Context = this
 
@@ -329,7 +387,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
     override fun onOpenDrawer() {
         runOnUiThread {
-            drawer?.openDrawer(GravityCompat.START)
+            drawer.openDrawer(GravityCompat.START)
         }
     }
 
@@ -338,21 +396,16 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             if (controller?.isPlaying == true) {
                 controller?.pause()
             } else {
-                controller?.play(activity as Context)
+                controller?.play(this)
             }
         }
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        loadBackground()
     }
 
     override fun onSetBackground(backgroundSrc: String) {
         backgroundImageSrc = backgroundSrc
         runOnUiThread {
             if (backgroundSrc == "solid") {
-                Glide.with(this).clear(bgPlayerView!!)
+                Glide.with(this).clear(bgPlayerView)
             } else {
                 loadBackground()
             }
@@ -385,6 +438,10 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         runOnUiThread { pushPlaybackState() }
     }
 
+    /**
+     * Socket callback implementations
+     */
+
     override fun onReconnectRequest() {
         socketClient.connect()
     }
@@ -411,8 +468,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onSocketReconnectFailed() {
-
         webViewManager.pushData("socketReconnectFailed")
-
     }
 }
