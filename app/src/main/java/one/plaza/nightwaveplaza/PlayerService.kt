@@ -274,8 +274,6 @@ class PlayerService : MediaLibraryService() {
      * Uses mutex to prevent concurrent API calls
      */
     private fun updateSongMetadata() {
-        if (!metadataUpdating.tryLock()) return
-
         serviceScope.launch(Dispatchers.IO) {
             metadataUpdating.withLock {
                 runCatching {
