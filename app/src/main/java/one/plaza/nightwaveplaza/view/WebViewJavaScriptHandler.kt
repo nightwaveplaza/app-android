@@ -1,10 +1,8 @@
 package one.plaza.nightwaveplaza.view
 
-import android.content.Context
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import android.webkit.JavascriptInterface
 import androidx.media3.common.util.UnstableApi
+import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.helpers.Utils
 
@@ -57,14 +55,7 @@ class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
 
     @JavascriptInterface
     fun getAppVersion(): String {
-        try {
-            val context: Context = callback.getActivityContext()
-            val pInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            return pInfo.versionName + " (build " + pInfo.versionCode + ")"
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
-            return "Error"
-        }
+        return "${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
     }
 
     @JavascriptInterface

@@ -1,11 +1,8 @@
 package one.plaza.nightwaveplaza.view
 
-import android.content.Context
-
 interface WebViewCallback {
     fun onWebViewLoaded()
     fun onWebViewLoadFail()
-    fun getActivityContext(): Context
 
     fun onOpenDrawer()
     fun onPlayAudio()

@@ -372,8 +372,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * WebView callback implementations
      */
 
-    override fun getActivityContext(): Context = this
-
     override fun onWebViewLoadFail() {
         runOnUiThread { notifyNoInternet() }
     }
