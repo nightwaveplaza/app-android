@@ -42,6 +42,7 @@ import one.plaza.nightwaveplaza.socket.SocketClient
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
+import java.lang.ref.WeakReference
 import java.util.Locale
 
 /**
@@ -107,7 +108,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
         // Socket initialization
         socketClient = SocketClient(
-            callback = this,
+            callback = WeakReference(this),
             lifecycle = lifecycle
         )
         socketClient.initialize()
@@ -132,6 +133,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onResume() {
         super.onResume()
         setFullscreen()
+        pushPlaybackState()
         Timber.d("Lifecycle: onResume")
     }
 
@@ -214,8 +216,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private var playerListener: Player.Listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
-            webViewManager.pushData("isPlaying", isPlaying)
-            webViewManager.pushData("sleepTime", Settings.sleepTime)
+            pushPlaybackState()
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -236,10 +237,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Push current status to the WebView if available
      */
     private fun pushStatus() {
-        if (status != null) {
-            webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
-        } else {
-            Timber.d("Attempt to push status not initialized yet.")
+        if (webViewManager.webViewLoaded) {
+            if (status != null) {
+                webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
+            } else {
+                Timber.d("Attempt to push status not initialized yet.")
+            }
         }
     }
 
@@ -313,10 +316,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Update WebView with current playback state
      */
     private fun pushPlaybackState() {
-        if (controller != null) {
-            webViewManager.pushData("isPlaying", controller!!.isPlaying)
+        if (webViewManager.webViewLoaded) {
+            if (controller != null) {
+                webViewManager.pushData("isPlaying", controller!!.isPlaying)
+            }
+            webViewManager.pushData("sleepTime", Settings.sleepTime)
         }
-        webViewManager.pushData("sleepTime", Settings.sleepTime)
     }
 
     /**
@@ -417,11 +422,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
-    override fun onSetSleepTimer(timestamp: Long) {
+    override fun onSetSleepTimer(time: Long) {
         runOnUiThread {
-            val time: Long = if (timestamp > 0) timestamp else 0
-            Settings.sleepTime = time
-            controller?.setSleepTimer()
+            controller?.setSleepTimer(time)
         }
     }
 

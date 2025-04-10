@@ -20,6 +20,8 @@ fun prepareUri(): MediaItem {
     return MediaItem.fromUri("https://radio.plaza.one/hls.m3u8")
 }
 
-fun MediaController.setSleepTimer() {
-    sendCustomCommand(SessionCommand(Keys.SET_TIMER, Bundle.EMPTY), Bundle.EMPTY)
+fun MediaController.setSleepTimer(time: Long) {
+    var b = Bundle()
+    b.putLong("time", time)
+    sendCustomCommand(SessionCommand(Keys.SET_TIMER, Bundle.EMPTY), b)
 }

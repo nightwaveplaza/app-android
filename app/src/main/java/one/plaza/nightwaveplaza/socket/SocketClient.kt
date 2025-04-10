@@ -9,10 +9,11 @@ import io.socket.client.Manager
 import io.socket.client.Socket
 import org.json.JSONObject
 import timber.log.Timber
+import java.lang.ref.WeakReference
 import java.net.URISyntaxException
 
 class SocketClient(
-    private val callback: SocketCallback,
+    private val callback: WeakReference<SocketCallback>,
     private val lifecycle: Lifecycle,
 ) : LifecycleObserver {
     private var socket: Socket? = null
@@ -56,29 +57,29 @@ class SocketClient(
     private fun createSocketListeners() {
         socket?.on("status") { args ->
             (args.getOrNull(0) as? JSONObject)?.let {
-                callback.onStatus(it.toString())
+                callback.get()?.onStatus(it.toString())
             }
         }?.on("listeners") { args ->
             (args.getOrNull(0) as? Int)?.let {
-                callback.onListeners(it)
+                callback.get()?.onListeners(it)
             }
         }?.on("reactions") { args ->
             (args.getOrNull(0) as? Int)?.let {
-                callback.onReactions(it)
+                callback.get()?.onReactions(it)
             }
         }?.on("connect") { _ ->
             Timber.d("Socket: Connected")
             isConnected = true
-            callback.onSocketConnect()
+            callback.get()?.onSocketConnect()
         }?.on("disconnect")  { _ ->
             Timber.d("Socket: Disconnected")
             isConnected = false
-            callback.onSocketDisconnect()
+            callback.get()?.onSocketDisconnect()
         }
 
         socket?.io()?.on(Manager.EVENT_RECONNECT_FAILED) {
             Timber.d("Socket: Reconnect failed")
-            callback.onSocketReconnectFailed()
+            callback.get()?.onSocketReconnectFailed()
         }
     }
 
