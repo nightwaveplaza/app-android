@@ -380,7 +380,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
     override fun onReady() {
         pushStatus()
-        pushPlaybackState()
+        runOnUiThread { pushPlaybackState() }
     }
 
     override fun onReconnectRequest() {
