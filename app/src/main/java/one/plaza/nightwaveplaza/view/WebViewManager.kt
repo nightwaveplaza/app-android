@@ -80,6 +80,7 @@ class WebViewManager(
      * or fetching the latest from API
      */
     fun loadWebView() {
+        Timber.d("Load WebView")
         webViewClient.resetAttempts()
 
         if (BuildConfig.PLAZA_URL_OVERRIDE.isNotEmpty()) {
@@ -94,6 +95,8 @@ class WebViewManager(
      * Fetches the current UI version from server and load WebView
      */
     private fun updateViewVersion() {
+        Timber.d("Updating view version")
+
         viewVersionJob?.cancel()
         viewVersionJob = lifecycle.coroutineScope.launch(Dispatchers.IO) {
             val client = ApiClient()
@@ -103,9 +106,11 @@ class WebViewManager(
 
             // Try to get UI version from server with retries
             while (version == null && isActive && attempts <= maxAttempts) {
+                Timber.d("Trying to get new version...")
                 try {
                     version = client.getVersion()
                 } catch (e: Exception) {
+                    Timber.d("Error updating version")
                     Timber.e(e)
                     delay(5000)
                     attempts += 1
@@ -120,11 +125,12 @@ class WebViewManager(
             withContext(Dispatchers.Main) {
                 // Only clear cache if URL has changed
                 if (version.viewSrc != Settings.viewUri) {
+                    Timber.d("Version changed, clearing cache")
                     webView.clearCache(true)
                     Settings.viewUri = version.viewSrc
                 }
 
-                webView.stopLoading()
+                Timber.d("Loading ${Settings.viewUri}")
                 webView.loadUrl(Settings.viewUri)
             }
         }
@@ -254,7 +260,6 @@ class WebViewManager(
 
             Timber.d("WebView loaded")
             attempts = 0
-            view.visibility = View.VISIBLE
             onWebViewLoaded()
         }
 
