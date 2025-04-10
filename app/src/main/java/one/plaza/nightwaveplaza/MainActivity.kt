@@ -94,8 +94,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         drawer = findViewById(R.id.drawer)
         setupDrawer()
 
-        setBackButtonCallback()
-
         // WebView initialization
         webView = findViewById(R.id.webview)
         webViewManager = WebViewManager(
@@ -273,20 +271,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         val window = view.tag.toString()
         webViewManager.pushData("openWindow", window)
         drawer.closeDrawers()
-    }
-
-    /**
-     * Override back button to go home instead of closing activity
-     */
-    private fun setBackButtonCallback() {
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val a = Intent(Intent.ACTION_MAIN)
-                a.addCategory(Intent.CATEGORY_HOME)
-                a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(a)
-            }
-        })
     }
 
     /**
