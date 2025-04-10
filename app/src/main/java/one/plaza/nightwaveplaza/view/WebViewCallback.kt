@@ -10,6 +10,7 @@ interface WebViewCallback {
     fun onToggleFullscreen()
     fun onSetSleepTimer(timestamp: Long)
     fun onSetLanguage(lang: String)
+    fun onSetThemeColor(color: String)
     fun onReady()
     fun onReconnectRequest()
 }

@@ -72,4 +72,9 @@ class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
     fun socketReconnect() {
         callback.onReconnectRequest()
     }
+
+    @JavascriptInterface
+    fun setThemeColor(color: String) {
+        callback.onSetThemeColor(color)
+    }
 }

@@ -1,17 +1,19 @@
 package one.plaza.nightwaveplaza
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.DialogInterface
 import android.content.DialogInterface.OnClickListener
-import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.Window
 import android.view.WindowInsets
 import android.webkit.WebView
 import android.widget.ImageView
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -44,6 +46,7 @@ import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.Locale
+import androidx.core.graphics.toColorInt
 
 /**
  * Main activity that integrates the web UI, socket connection and media playback.
@@ -110,6 +113,34 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             lifecycle = lifecycle
         )
         socketClient.initialize()
+
+        setStatusBarInsets(window, "#008080".toColorInt())
+    }
+
+    fun setStatusBarInsets(window: Window, @ColorInt color: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val statusBarInsets = insets.getInsets(WindowInsets.Type.navigationBars())
+
+                view.setBackgroundColor(color)
+
+                // Adjust padding to avoid overlap
+                view.setPadding(0, 0, 0, statusBarInsets.bottom)
+                insets
+            }
+        } else {
+            window.navigationBarColor = color
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    fun applyStatusBarColor(@ColorInt color: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            window.decorView.setBackgroundColor(color)
+        } else {
+            // For Android 14 and below
+            window.navigationBarColor = color
+        }
     }
 
     /**
@@ -415,6 +446,13 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onSetLanguage(lang: String) {
         runOnUiThread {
             setLanguage(lang)
+        }
+    }
+
+    override fun onSetThemeColor(color: String) {
+        println(color)
+        runOnUiThread {
+            applyStatusBarColor(color.toColorInt())
         }
     }
 

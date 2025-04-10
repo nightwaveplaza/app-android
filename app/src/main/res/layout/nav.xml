@@ -25,7 +25,7 @@
         <ImageView
             android:layout_width="@dimen/nav_icon_size"
             android:layout_height="@dimen/nav_icon_size"
-            android:src="@drawable/si_ratings"
+            android:src="@raw/si_ratings"
             android:contentDescription="@string/ratings" />
 
         <TextView
@@ -58,7 +58,7 @@
         <ImageView
             android:layout_width="@dimen/nav_icon_size"
             android:layout_height="@dimen/nav_icon_size"
-            android:src="@drawable/si_history"
+            android:src="@raw/si_history"
             android:contentDescription="@string/history" />
 
         <TextView
@@ -96,7 +96,7 @@
         <ImageView
             android:layout_width="@dimen/nav_icon_size"
             android:layout_height="@dimen/nav_icon_size"
-            android:src="@drawable/si_favorites"
+            android:src="@raw/si_favorites"
             android:contentDescription="@string/ratings" />
 
         <TextView
@@ -129,7 +129,7 @@
         <ImageView
             android:layout_width="@dimen/nav_icon_size"
             android:layout_height="@dimen/nav_icon_size"
-            android:src="@drawable/si_profile"
+            android:src="@raw/si_profile"
             android:contentDescription="@string/ratings" />
 
         <TextView
@@ -167,7 +167,7 @@
         <ImageView
             android:layout_width="@dimen/nav_icon_size"
             android:layout_height="@dimen/nav_icon_size"
-            android:src="@drawable/si_settings"
+            android:src="@raw/si_settings"
             android:contentDescription="@string/ratings" />
 
         <TextView
@@ -201,7 +201,7 @@
         <ImageView
             android:layout_width="@dimen/nav_icon_size"
             android:layout_height="@dimen/nav_icon_size"
-            android:src="@drawable/si_help"
+            android:src="@raw/si_help"
             android:contentDescription="@string/ratings" />
 
         <TextView
