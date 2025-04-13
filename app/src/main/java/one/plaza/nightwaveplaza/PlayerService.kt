@@ -260,8 +260,8 @@ class PlayerService : MediaLibraryService() {
                     val status = ApiClient().getStatus()
                     if (status.song.id.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
-                            positionTracker.length = status.song.length * 1L
                             positionTracker.position = status.position * 1L
+                            positionTracker.length = status.song.length * 1L
                             positionTracker.updatedAt = status.updatedAt
                             setNewMetadata(status.song)
                         }

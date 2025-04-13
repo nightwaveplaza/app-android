@@ -11,12 +11,11 @@ import android.view.Window
 import android.view.WindowInsets
 import android.webkit.WebView
 import android.widget.ImageView
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.graphics.toColorInt
 import androidx.core.os.LocaleListCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.WindowCompat
@@ -46,7 +45,6 @@ import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.Locale
-import androidx.core.graphics.toColorInt
 
 /**
  * Main activity that integrates the web UI, socket connection and media playback.
@@ -336,8 +334,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Update WebView with current playback state
      */
     private fun pushPlaybackState() {
-        if (controller != null) {
-            webViewManager.pushData("isPlaying", controller!!.isPlaying)
+        val currentController = controller
+        currentController?.let {
+            webViewManager.pushData("isPlaying", it.isPlaying)
         }
         webViewManager.pushData("sleepTime", Settings.sleepTime)
     }
@@ -414,10 +413,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
     override fun onPlayAudio() {
         runOnUiThread {
-            if (controller?.isPlaying == true) {
-                controller?.pause()
-            } else {
-                controller?.play(this)
+            val currentController = controller
+            currentController?.let {
+                if (it.isPlaying) it.pause() else it.play(this)
             }
         }
     }
