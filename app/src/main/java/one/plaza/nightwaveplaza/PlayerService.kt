@@ -50,7 +50,6 @@ import java.io.IOException
  */
 @UnstableApi
 class PlayerService : MediaLibraryService() {
-
     private lateinit var player: Player
     private val positionTracker = PositionTracker()
     private lateinit var mediaLibrarySession: MediaLibrarySession
@@ -76,24 +75,16 @@ class PlayerService : MediaLibraryService() {
         initializeSession()
 
         // Custom notification with branded icon
-        val notificationProvider = CustomNotificationProvider()
+        val notificationProvider =  DefaultMediaNotificationProvider
+            .Builder(this)
+            .setNotificationId(4208)
+            .setChannelId("nightwave_plaza_channel")
+            .setChannelName(R.string.app_name)
+            .build()
         notificationProvider.setSmallIcon(R.drawable.ic_cat_icon)
         setMediaNotificationProvider(notificationProvider)
     }
-
-    override fun onTaskRemoved(rootIntent: Intent?) {
-        super.onTaskRemoved(rootIntent)
-
-        // Handles app swipe-away behavior - only stops service if not playing
-        // See: https://github.com/androidx/media/issues/167#issuecomment-1615184728
-        if (!player.playWhenReady) {
-            closePlayer()
-            stopSelf()
-        }
-
-        Settings.isPlaying = false
-    }
-
+    
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
@@ -245,6 +236,7 @@ class PlayerService : MediaLibraryService() {
             }
             return super.onCustomCommand(session, controller, customCommand, args)
         }
+
     }
 
     /**
