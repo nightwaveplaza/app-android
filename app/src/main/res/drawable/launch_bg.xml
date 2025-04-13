@@ -3,6 +3,6 @@
     <item android:drawable="@color/splash_bg" />
 
     <item>
-        <bitmap android:gravity="center" android:src="@mipmap/ic_splash_icon_foreground" />
+        <bitmap android:gravity="center" android:src="@raw/splash_icon" />
     </item>
 </layer-list>
