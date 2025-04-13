@@ -162,7 +162,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onResume() {
         super.onResume()
         setFullscreen()
-        pushPlaybackState()
         Timber.d("Lifecycle: onResume")
     }
 
@@ -228,6 +227,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private fun setupController() {
         val controller: MediaController = this.controller ?: return
         controller.addListener(playerListener)
+        pushPlaybackState()
     }
 
     /**
@@ -331,12 +331,10 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Update WebView with current playback state
      */
     private fun pushPlaybackState() {
-        if (webViewManager.webViewLoaded) {
-            if (controller != null) {
-                webViewManager.pushData("isPlaying", controller!!.isPlaying)
-            }
-            webViewManager.pushData("sleepTime", Settings.sleepTime)
+        if (controller != null) {
+            webViewManager.pushData("isPlaying", controller!!.isPlaying)
         }
+        webViewManager.pushData("sleepTime", Settings.sleepTime)
     }
 
     /**
@@ -450,7 +448,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onSetThemeColor(color: String) {
-        println(color)
         runOnUiThread {
             applyStatusBarColor(color.toColorInt())
         }

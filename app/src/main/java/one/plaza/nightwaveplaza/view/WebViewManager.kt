@@ -157,6 +157,7 @@ class WebViewManager(
     }
 
     fun destroy() {
+        webViewLoaded = false
         webView.apply {
             stopLoading()
             removeAllViews()
@@ -171,6 +172,12 @@ class WebViewManager(
      * Sends data to JavaScript via event emission
      */
     fun pushData(action: String, payload: Any? = null) {
+        println(action)
+        println(payload)
+        if (!webViewLoaded) {
+            return
+        }
+
         val call = when (payload) {
             null -> "window['emitter'].emit('$action')"
             is String -> "window['emitter'].emit('$action', '$payload')"
