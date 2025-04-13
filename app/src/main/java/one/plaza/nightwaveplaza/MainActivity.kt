@@ -56,7 +56,12 @@ import androidx.core.graphics.toColorInt
 class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     // Controller for media playback operations
     private val controller: MediaController?
-        get() = if (controllerFuture.isDone) controllerFuture.get() else null
+        get() = try {
+            if (controllerFuture.isDone) controllerFuture.get() else null
+        } catch (e: Exception) {
+            Timber.e(e, "Error getting controller")
+            null
+        }
     private lateinit var controllerFuture: ListenableFuture<MediaController>
 
     // WebView manager
