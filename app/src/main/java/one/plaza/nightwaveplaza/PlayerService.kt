@@ -10,6 +10,7 @@ import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
@@ -51,6 +52,7 @@ import java.io.IOException
 class PlayerService : MediaLibraryService() {
 
     private lateinit var player: Player
+    private val positionTracker = PositionTracker()
     private lateinit var mediaLibrarySession: MediaLibrarySession
 
     // Coroutine scope tied to service lifecycle for async operations
@@ -75,7 +77,7 @@ class PlayerService : MediaLibraryService() {
 
         // Custom notification with branded icon
         val notificationProvider = CustomNotificationProvider()
-        notificationProvider.setSmallIcon(R.drawable.ic_cat)
+        notificationProvider.setSmallIcon(R.drawable.ic_cat_icon)
         setMediaNotificationProvider(notificationProvider)
     }
 
@@ -253,8 +255,8 @@ class PlayerService : MediaLibraryService() {
             super.onIsPlayingChanged(isPlaying)
             Settings.isPlaying = isPlaying
 
-            // Refresh metadata when starting playback if missing
-            if (isPlaying && player.mediaMetadata.artist == null) {
+            // Refresh metadata when starting playback
+            if (isPlaying) {
                 updateSongMetadata()
             }
 
@@ -266,6 +268,17 @@ class PlayerService : MediaLibraryService() {
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
             updateSongMetadata()
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            // Catch BehindLiveWindowException is music was paused too long
+            if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                // Re-initialize player at the live edge.
+                player.seekToDefaultPosition()
+                player.prepare()
+            } else {
+                // Handle other errors
+            }
         }
     }
 
@@ -280,6 +293,9 @@ class PlayerService : MediaLibraryService() {
                     val status = ApiClient().getStatus()
                     if (status.song.id.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
+                            positionTracker.length = status.song.length * 1L
+                            positionTracker.position = status.position * 1L
+                            positionTracker.updatedAt = status.updatedAt
                             setNewMetadata(status.song)
                         }
                     }
@@ -299,9 +315,14 @@ class PlayerService : MediaLibraryService() {
      */
     private fun setNewMetadata(song: ApiClient.Song) {
         player.currentMediaItem?.let { currentItem ->
+            if (song.artist === currentItem.mediaMetadata.artist && song.title === currentItem.mediaMetadata.title) {
+                return
+            }
+
             val updatedMetadata = currentItem.mediaMetadata.buildUpon()
                 .setArtist(song.artist)
                 .setTitle(song.title)
+                .setDurationMs(song.length * 1000L)
                 .setArtworkUri(song.artworkSrc.toUri())
                 .build()
 
@@ -392,9 +413,31 @@ class PlayerService : MediaLibraryService() {
             }
 
             // Disable time reporting for live streams
-            override fun getDuration(): Long = C.TIME_UNSET
-            override fun getCurrentPosition(): Long = C.TIME_UNSET
-            override fun getContentPosition(): Long = C.TIME_UNSET
+            //override fun getDuration(): Long = C.TIME_UNSET
+            //override fun getCurrentPosition(): Long = C.TIME_UNSET
+            //override fun getContentPosition(): Long = positionTracker.getCurrentPosition()
+            override fun getCurrentPosition(): Long = positionTracker.getCurrentPosition()
+        }
+    }
+
+    inner class PositionTracker {
+        var position = 0L
+            set(value) { field = value * 1000 }
+        var length = 0L
+            set(value) { field = value * 1000 }
+        var updatedAt = 0L
+            set(value) { field = value * 1000 }
+
+        fun getCurrentPosition(): Long {
+            if (updatedAt == 0L) {
+                return 0L
+            }
+            val actualPosition = System.currentTimeMillis() - updatedAt + position
+            if (actualPosition > length) {
+                return length - 5000
+            }
+
+            return actualPosition - 5000
         }
     }
 }
