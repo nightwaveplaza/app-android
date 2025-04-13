@@ -181,31 +181,6 @@ class PlayerService : MediaLibraryService() {
     }
 
     /**
-     * Customizes media notification buttons based on player state
-     */
-    private inner class CustomNotificationProvider :
-        DefaultMediaNotificationProvider(this@PlayerService) {
-
-        override fun getMediaButtons(
-            session: MediaSession,
-            playerCommands: Player.Commands,
-            customLayout: ImmutableList<CommandButton>,
-            showPauseButton: Boolean
-        ): ImmutableList<CommandButton> {
-            val playCommandButton = CommandButton.Builder(
-                if (player.isPlaying) CommandButton.ICON_PAUSE else CommandButton.ICON_PLAY
-            ).apply {
-                setPlayerCommand(Player.COMMAND_PLAY_PAUSE)
-                setEnabled(true)
-            }.build()
-            val commandButtons: MutableList<CommandButton> = mutableListOf(
-                playCommandButton
-            )
-            return ImmutableList.copyOf(commandButtons)
-        }
-    }
-
-    /**
      * Handles custom commands from clients, especially sleep timer controls
      */
     private inner class CustomMediaLibrarySessionCallback : MediaLibrarySession.Callback {
@@ -307,7 +282,7 @@ class PlayerService : MediaLibraryService() {
      */
     private fun setNewMetadata(song: ApiClient.Song) {
         player.currentMediaItem?.let { currentItem ->
-            if (song.artist === currentItem.mediaMetadata.artist && song.title === currentItem.mediaMetadata.title) {
+            if (song.artist == currentItem.mediaMetadata.artist && song.title == currentItem.mediaMetadata.title) {
                 return
             }
 
@@ -419,17 +394,21 @@ class PlayerService : MediaLibraryService() {
             set(value) { field = value * 1000 }
         var updatedAt = 0L
             set(value) { field = value * 1000 }
+        var latestPosition = 0L
 
         fun getCurrentPosition(): Long {
             if (updatedAt == 0L) {
-                return 0L
-            }
-            val actualPosition = System.currentTimeMillis() - updatedAt + position
-            if (actualPosition > length) {
-                return length - 5000
+                return C.TIME_UNSET
             }
 
-            return actualPosition - 5000
+            if (!player.isPlaying) {
+                return latestPosition
+            }
+
+            val actualPosition = System.currentTimeMillis() - updatedAt + position
+            latestPosition = if (actualPosition > length) length else actualPosition
+
+            return latestPosition
         }
     }
 }
