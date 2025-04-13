@@ -84,7 +84,7 @@ class PlayerService : MediaLibraryService() {
         notificationProvider.setSmallIcon(R.drawable.ic_cat_icon)
         setMediaNotificationProvider(notificationProvider)
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
