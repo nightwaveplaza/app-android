@@ -17,7 +17,9 @@ fun MediaController.play(context: Context) {
 }
 
 fun prepareUri(): MediaItem {
-    return MediaItem.fromUri("https://radio.plaza.one/hls.m3u8")
+    return MediaItem.Builder().setUri("https://radio.plaza.one/hls.m3u8").setLiveConfiguration(
+        MediaItem.LiveConfiguration.Builder().setMaxOffsetMs(5000).build()
+    ).build()
 }
 
 fun MediaController.setSleepTimer(time: Long) {
