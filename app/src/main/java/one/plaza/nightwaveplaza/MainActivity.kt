@@ -117,10 +117,10 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         )
         socketClient.initialize()
 
-        setStatusBarInsets(window, "#008080".toColorInt())
+        setNavigationBarInset(window, "#008080".toColorInt())
     }
 
-    fun setStatusBarInsets(window: Window, @ColorInt color: Int) {
+    fun setNavigationBarInset(window: Window, @ColorInt color: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             window.decorView.setOnApplyWindowInsetsListener { view, insets ->
                 val statusBarInsets = insets.getInsets(WindowInsets.Type.navigationBars())
