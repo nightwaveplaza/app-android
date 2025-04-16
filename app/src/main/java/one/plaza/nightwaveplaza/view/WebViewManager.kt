@@ -172,8 +172,6 @@ class WebViewManager(
      * Sends data to JavaScript via event emission
      */
     fun pushData(action: String, payload: Any? = null) {
-        println(action)
-        println(payload)
         if (!webViewLoaded) {
             return
         }
