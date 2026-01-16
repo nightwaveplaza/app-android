@@ -27,7 +27,6 @@ class SocketClient(
                 IO.Options.builder()
                     .setPath("/ws")
                     .setReconnection(true)
-                    .setReconnectionAttempts(10)
                     .build()
             )
         } catch (_: URISyntaxException) {

@@ -172,9 +172,9 @@ class WebViewManager(
      * Sends data to JavaScript via event emission
      */
     fun pushData(action: String, payload: Any? = null) {
-        if (!webViewLoaded) {
-            return
-        }
+//        if (!webViewLoaded) {
+//            return
+//        }
 
         val call = when (payload) {
             null -> "window['emitter'].emit('$action')"
@@ -245,12 +245,7 @@ class WebViewManager(
         override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
 
-            // Wait for complete page load
-            if (view.progress < 100) {
-                return
-            }
-
-            Timber.d("onPageFinished (100)")
+            Timber.d("onPageFinished")
 
             if (loadError) {
                 Timber.d("WebView load error")

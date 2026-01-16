@@ -78,6 +78,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
     private var status: ApiClient.Status? = null
 
+    private var appIsReady = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -269,7 +271,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Push current status to the WebView if available
      */
     private fun pushStatus() {
-        if (webViewManager.webViewLoaded) {
+        if (appIsReady) {
             if (status != null) {
                 webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
             } else {
@@ -457,8 +459,11 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onReady() {
-        pushStatus()
-        runOnUiThread { pushPlaybackState() }
+        appIsReady = true
+        runOnUiThread {
+            pushStatus()
+            pushPlaybackState()
+        }
     }
 
     /**
