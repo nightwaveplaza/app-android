@@ -8,4 +8,5 @@
     <string name="no_internet">Perdão, tivemos um problema ao te conectar ao nosso servidor. Aguarde…</string>
     <string name="my_likes">Favoritas</string>
     <string name="ratings">Mais Populares</string>
+    <string name="loading_image">Carregando imagem</string>
 </resources>
