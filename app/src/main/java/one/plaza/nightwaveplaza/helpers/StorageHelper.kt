@@ -3,6 +3,7 @@ package one.plaza.nightwaveplaza.helpers
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import androidx.core.content.edit
 
 object StorageHelper {
     private lateinit var sharedPreferences: SharedPreferences
@@ -13,7 +14,7 @@ object StorageHelper {
 
     // Save-load strings
     fun save(name: String, value: String) {
-        sharedPreferences.edit().putString(name, value).apply()
+        sharedPreferences.edit { putString(name, value) }
     }
 
     fun load(name: String, def: String): String {
@@ -22,7 +23,7 @@ object StorageHelper {
 
     // Save-load int
     fun save(name: String, value: Int) {
-        sharedPreferences.edit().putInt(name, value).apply()
+        sharedPreferences.edit { putInt(name, value) }
     }
 
     fun load(name: String, def: Int): Int {
@@ -31,7 +32,7 @@ object StorageHelper {
 
     // Save-load Long
     fun save(name: String, value: Long) {
-        sharedPreferences.edit().putLong(name, value).apply()
+        sharedPreferences.edit { putLong(name, value) }
     }
 
     fun load(name: String, def: Long): Long {
@@ -40,7 +41,7 @@ object StorageHelper {
 
     // Save-load boolean
     fun save(name: String, value: Boolean) {
-        sharedPreferences.edit().putBoolean(name, value).apply()
+        sharedPreferences.edit { putBoolean(name, value) }
     }
 
     fun load(name: String, def: Boolean): Boolean {

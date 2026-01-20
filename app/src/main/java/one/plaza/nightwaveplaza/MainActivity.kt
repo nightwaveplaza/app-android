@@ -119,7 +119,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         )
         socketClient.initialize()
 
-        setNavigationBarInset(window, "#008080".toColorInt())
+        val themeColor = Settings.themeColor
+        setNavigationBarInset(window, themeColor.toColorInt())
     }
 
     fun setNavigationBarInset(window: Window, @ColorInt color: Int) {
@@ -138,20 +139,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
-    @Suppress("DEPRECATION")
-    fun applyStatusBarColor(@ColorInt color: Int) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            window.decorView.setBackgroundColor(color)
-        } else {
-            // For Android 14 and below
-            window.navigationBarColor = color
-        }
-    }
-
     /**
      * Lifecycle methods to handle controller initialization and cleanup
      */
-
     override fun onStart() {
         super.onStart()
         initializeController()
@@ -454,7 +444,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
     override fun onSetThemeColor(color: String) {
         runOnUiThread {
-            applyStatusBarColor(color.toColorInt())
+            Settings.themeColor = color
+            setNavigationBarInset(window, color.toColorInt())
+            //applyStatusBarColor(color.toColorInt())
         }
     }
 

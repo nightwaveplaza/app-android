@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
@@ -15,15 +18,15 @@ if (project.rootProject.file('plaza.properties').canRead()) {
 }
 
 android {
-    namespace 'one.plaza.nightwaveplaza'
+    namespace = 'one.plaza.nightwaveplaza'
     compileSdk = 36
 
     defaultConfig {
-        applicationId 'one.plaza.nightwaveplaza'
-        minSdk 23
-        targetSdkVersion 35
-        versionCode 239
-        versionName '2.1.2'
+        applicationId = 'one.plaza.nightwaveplaza'
+        minSdk = 23
+        targetSdk = 35
+        versionCode = 239
+        versionName = '2.1.2'
 
         buildFeatures {
             buildConfig true
@@ -42,27 +45,27 @@ android {
 
     signingConfigs {
         release {
-            storeFile file('keystore/upload.jks')
-            storePassword System.getenv('KEYSTORE_PASSWORD')
-            keyAlias System.getenv('RELEASE_SIGN_KEY_ALIAS')
-            keyPassword System.getenv('RELEASE_SIGN_KEY_PASSWORD')
+            storeFile = file('keystore/upload.jks')
+            storePassword = System.getenv('KEYSTORE_PASSWORD')
+            keyAlias = System.getenv('RELEASE_SIGN_KEY_ALIAS')
+            keyPassword = System.getenv('RELEASE_SIGN_KEY_PASSWORD')
         }
     }
 
     buildTypes {
         release {
-            shrinkResources true
-            signingConfig signingConfigs.release
+            shrinkResources = true
+            signingConfig = signingConfigs.release
             postprocessing {
-                removeUnusedCode true
-                obfuscate false
-                optimizeCode true
+                removeUnusedCode = true
+                obfuscate = false
+                optimizeCode = true
             }
             //minifyEnabled true
-            //proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -70,12 +73,10 @@ android {
         viewBinding true
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
@@ -119,8 +120,9 @@ dependencies {
     }
 
     implementation 'com.jakewharton.timber:timber:5.0.1'
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
+    //debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
 }
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)

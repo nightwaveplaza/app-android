@@ -11,6 +11,7 @@ object Settings {
     private const val AUDIO_LQ = "AudioLowQuality"
     private const val VIEW_SRC_URI = "ViewVersion"
     private const val LANGUAGE = "Language"
+    private const val THEME_COLOR = "ThemeColor"
 
     var isPlaying: Boolean = false
         set(v) {
@@ -60,4 +61,11 @@ object Settings {
             field = v
         }
         get() = StorageHelper.load(LANGUAGE, Locale.getDefault().language)
+
+    var themeColor: String = ""
+        set(v) {
+            StorageHelper.save(THEME_COLOR, v)
+            field = v
+        }
+        get() = StorageHelper.load(THEME_COLOR, "#c0c0c0")
 }
