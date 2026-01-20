@@ -303,22 +303,17 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Apply language setting and update app locale
      */
     private fun setLanguage(lang: String) {
-        val parts = lang.split("-")
-        val language = parts[0]
-        val region = if (parts.size > 1) parts[1] else ""
+        val locale = Locale.forLanguageTag(lang)
+        val tag = locale.toLanguageTag()
 
-        val locale = if (region.isNotEmpty()) Locale(language, region) else Locale(language)
-
-        // Don't react to change to the same language
-        if (Settings.language == locale.toLanguageTag()) {
+        if (Settings.language == tag) {
             return
         }
 
-        Settings.language = locale.toLanguageTag()
+        Settings.language = tag
 
-        // Set application locale
         AppCompatDelegate.setApplicationLocales(
-            LocaleListCompat.forLanguageTags(locale.toLanguageTag())
+            LocaleListCompat.forLanguageTags(tag)
         )
     }
 
