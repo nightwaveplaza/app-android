@@ -25,7 +25,7 @@ android {
         applicationId = 'one.plaza.nightwaveplaza'
         minSdk = 23
         targetSdk = 35
-        versionCode = 239
+        versionCode = 241
         versionName = '2.1.2'
 
         buildFeatures {
@@ -61,7 +61,7 @@ android {
                 obfuscate = false
                 optimizeCode = true
             }
-            //minifyEnabled true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {

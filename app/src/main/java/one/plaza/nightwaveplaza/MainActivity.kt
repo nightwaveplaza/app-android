@@ -18,9 +18,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.graphics.toColorInt
 import androidx.core.os.LocaleListCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updatePadding
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -119,24 +121,32 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         )
         socketClient.initialize()
 
+        // Layout
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        applyBottomNavInset(findViewById(R.id.viewLayout))
+        applyBottomNavInset(findViewById(R.id.navBottomBlock))
+
         val themeColor = Settings.themeColor
-        setNavigationBarInset(window, themeColor.toColorInt())
+        setNavigationBarColor(window, themeColor.toColorInt())
     }
 
-    fun setNavigationBarInset(window: Window, @ColorInt color: Int) {
+    fun setNavigationBarColor(window: Window, @ColorInt color: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
-                val statusBarInsets = insets.getInsets(WindowInsets.Type.navigationBars())
-
-                view.setBackgroundColor(color)
-
-                // Adjust padding to avoid overlap
-                view.setPadding(0, 0, 0, statusBarInsets.bottom)
-                insets
-            }
+            window.decorView.setBackgroundColor(color)
         } else {
+            @Suppress("DEPRECATION")
             window.navigationBarColor = color
         }
+    }
+
+    fun applyBottomNavInset(view: View) {
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = nav.bottom)
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(view)
     }
 
     /**
@@ -274,20 +284,19 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Apply fullscreen mode based on current settings
      */
     private fun setFullscreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+
         if (Settings.fullScreen) {
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            WindowInsetsControllerCompat(window, window.decorView.rootView).let { controller ->
-                controller.hide(WindowInsetsCompat.Type.systemBars())
-                controller.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         } else {
-            WindowCompat.setDecorFitsSystemWindows(window, true)
-            WindowInsetsControllerCompat(
-                window,
-                window.decorView.rootView
-            ).show(WindowInsetsCompat.Type.systemBars())
+            controller.show(WindowInsetsCompat.Type.systemBars())
         }
+
+        window.decorView.requestApplyInsets()
     }
 
     /**
@@ -440,7 +449,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onSetThemeColor(color: String) {
         runOnUiThread {
             Settings.themeColor = color
-            setNavigationBarInset(window, color.toColorInt())
+            setNavigationBarColor(window, color.toColorInt())
             //applyStatusBarColor(color.toColorInt())
         }
     }

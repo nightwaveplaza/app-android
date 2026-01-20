@@ -35,20 +35,6 @@
             android:background="#008080"
             android:contentDescription="@string/loading_image"
         />
-
-
-<!--            <TextView-->
-<!--                android:drawableTop="@mipmap/ic_splash_icon_foreground"-->
-<!--                android:id="@+id/loading_text"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:textColor="#000000"-->
-<!--                android:fontFamily="monospace"-->
-<!--                android:textAlignment="center"-->
-<!--                android:layout_centerInParent="true"-->
-<!--                android:scrollbars="vertical"-->
-<!--                android:text="Loading..."-->
-<!--                android:textSize="18sp"/>-->
     </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView
@@ -59,6 +45,7 @@
         android:background="@android:color/transparent">
 
         <LinearLayout
+            android:id="@+id/navBottomBlock"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:orientation="horizontal"
