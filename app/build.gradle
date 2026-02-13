@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
 }
 
 // Load acra local properties
@@ -56,12 +55,8 @@ android {
         release {
             shrinkResources = true
             signingConfig = signingConfigs.release
-            postprocessing {
-                removeUnusedCode = true
-                obfuscate = false
-                optimizeCode = true
-            }
-            minifyEnabled true
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
