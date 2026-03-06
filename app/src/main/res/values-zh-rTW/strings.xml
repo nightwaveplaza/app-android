@@ -1,3 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    </resources>
+    <string name="ratings">排行榜</string>
+    <string name="my_profile">個人檔案</string>
+    <string name="my_likes">我的最愛</string>
+    <string name="settings">設定</string>
+    <string name="about">關於</string>
+    <string name="support">支持我們</string>
+    <string name="history">播放紀錄</string>
+    <string name="no_internet">對不起，目前無法連線。系統重試中…</string>
+    <string name="loading_image">正在載入圖片</string>
+</resources>
