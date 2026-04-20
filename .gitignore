@@ -2,6 +2,9 @@
 .gradle/
 build/
 
+# Ingore www
+app/src/main/assets/www
+
 
 # Local configuration file (sdk path, etc)
 local.properties

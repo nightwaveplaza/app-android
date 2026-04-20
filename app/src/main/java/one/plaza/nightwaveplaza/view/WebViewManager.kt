@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.os.Build
 import android.view.View
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -17,15 +17,12 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.coroutineScope
 import androidx.media3.common.util.UnstableApi
+import androidx.webkit.WebViewAssetLoader
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.BuildConfig
-import one.plaza.nightwaveplaza.Settings
-import one.plaza.nightwaveplaza.api.ApiClient
 import timber.log.Timber
 
 /**
@@ -37,28 +34,32 @@ class WebViewManager(
     private val webView: WebView,
     private val lifecycle: Lifecycle,
 ) : LifecycleObserver {
-
-    private var viewVersionJob: Job? = null
     var webViewLoaded = false
     private val webViewClient = CustomWebViewClient()
     private val lifeCycleObserver = LifeCycleObserver()
+
+    private val versionManager = ViewVersionManager(webView.context)
+    private lateinit var assetLoader: WebViewAssetLoader
 
     /**
      * Initializes WebView with required settings and interfaces
      */
     @SuppressLint("SetJavaScriptEnabled")
     fun initialize() {
+        val context = webView.context
+
+        assetLoader = WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+            .addPathHandler("/updates/", WebViewAssetLoader.InternalStoragePathHandler(context, versionManager.updatesDir))
+            .build()
+
         webView.settings.apply {
             javaScriptEnabled = true
             textZoom = 100
             domStorageEnabled = true
             blockNetworkImage = false
             loadsImagesAutomatically = true
-            cacheMode = if (BuildConfig.DEBUG) {
-                WebSettings.LOAD_NO_CACHE
-            } else {
-                WebSettings.LOAD_CACHE_ELSE_NETWORK
-            }
+            cacheMode = WebSettings.LOAD_NO_CACHE
         }
 
         webView.apply {
@@ -81,57 +82,18 @@ class WebViewManager(
      */
     fun loadWebView() {
         Timber.d("Load WebView")
-        webViewClient.resetAttempts()
 
         if (BuildConfig.PLAZA_URL_OVERRIDE.isNotEmpty()) {
             webView.loadUrl(BuildConfig.PLAZA_URL_OVERRIDE)
             return
         }
 
-        updateViewVersion()
-    }
-
-    /**
-     * Fetches the current UI version from server and load WebView
-     */
-    private fun updateViewVersion() {
-        Timber.d("Updating view version")
-
-        viewVersionJob?.cancel()
-        viewVersionJob = lifecycle.coroutineScope.launch(Dispatchers.IO) {
-            val client = ApiClient()
-            var version: ApiClient.Version? = null
-            var attempts = 0
-            val maxAttempts = 3
-
-            // Try to get UI version from server with retries
-            while (version == null && isActive && attempts <= maxAttempts) {
-                Timber.d("Trying to get new version...")
-                try {
-                    version = client.getVersion()
-                } catch (e: Exception) {
-                    Timber.d("Error updating version")
-                    Timber.e(e)
-                    delay(5000)
-                    attempts += 1
-                }
-            }
-
-            if (version == null) {
-                callback.onWebViewLoadFail()
-                return@launch
-            }
+        lifecycle.coroutineScope.launch(Dispatchers.IO) {
+            val urlToLoad = versionManager.getStartUrl()
 
             withContext(Dispatchers.Main) {
-                // Only clear cache if URL has changed
-                if (version.viewSrc != Settings.viewUri) {
-                    Timber.d("Version changed, clearing cache")
-                    webView.clearCache(true)
-                    Settings.viewUri = version.viewSrc
-                }
-
-                Timber.d("Loading ${Settings.viewUri}")
-                webView.loadUrl(Settings.viewUri)
+                Timber.d("Loading URL: $urlToLoad")
+                webView.loadUrl(urlToLoad)
             }
         }
     }
@@ -142,8 +104,6 @@ class WebViewManager(
     fun pauseWebView() {
         if (!webViewLoaded) {
             webView.stopLoading()
-            viewVersionJob?.cancel()
-            viewVersionJob = null
         } else {
             webView.onPause()
         }
@@ -164,7 +124,6 @@ class WebViewManager(
             loadUrl("about:blank")
             destroy()
         }
-        viewVersionJob?.cancel()
         lifecycle.removeObserver(lifeCycleObserver)
     }
 
@@ -172,10 +131,6 @@ class WebViewManager(
      * Sends data to JavaScript via event emission
      */
     fun pushData(action: String, payload: Any? = null) {
-//        if (!webViewLoaded) {
-//            return
-//        }
-
         val call = when (payload) {
             null -> "window['emitter'].emit('$action')"
             is String -> "window['emitter'].emit('$action', '$payload')"
@@ -198,23 +153,8 @@ class WebViewManager(
      * Custom WebViewClient to handle page loading and errors
      */
     private inner class CustomWebViewClient : WebViewClient() {
-        private var loadError = false
-        private var attempts = 0
-        private val maxRetryAttempts = 3
-
-        fun resetAttempts() {
-            attempts = 0
-        }
-
-        /**
-         * Retries loading the URL after delay
-         */
-        private fun retryWithDelay(url: String) {
-            lifecycle.coroutineScope.launch {
-                delay(3000)
-                Timber.d("Retrying load...")
-                webView.loadUrl(url)
-            }
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+            return assetLoader.shouldInterceptRequest(request.url)
         }
 
         override fun shouldOverrideUrlLoading(
@@ -227,7 +167,7 @@ class WebViewManager(
             }
 
             // Open external links in browser
-            return if (!request.url.toString().startsWith("https://m.plaza.one")) {
+            return if (!request.url.toString().startsWith("https://appassets.androidplatform.net")) {
                 val intent = Intent(Intent.ACTION_VIEW, request.url)
                 view.context.startActivity(intent)
                 true
@@ -238,28 +178,12 @@ class WebViewManager(
 
         override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
             super.onPageStarted(view, url, favicon)
-            loadError = false
             Timber.d("onPageStarted")
         }
 
         override fun onPageFinished(view: WebView, url: String) {
             super.onPageFinished(view, url)
-
             Timber.d("onPageFinished")
-
-            if (loadError) {
-                Timber.d("WebView load error")
-                if (attempts <= maxRetryAttempts) {
-                    retryWithDelay(url)
-                    attempts += 1
-                } else {
-                    callback.onWebViewLoadFail()
-                }
-                return
-            }
-
-            Timber.d("WebView loaded")
-            attempts = 0
             onWebViewLoaded()
         }
 
@@ -269,8 +193,7 @@ class WebViewManager(
             error: WebResourceError?
         ) {
             super.onReceivedError(view, request, error)
-            loadError = true
-            if (error != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (error != null) {
                 Timber.e(error.description.toString())
             }
         }

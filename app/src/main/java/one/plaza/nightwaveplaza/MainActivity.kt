@@ -1,8 +1,6 @@
 package one.plaza.nightwaveplaza
 
 import android.content.ComponentName
-import android.content.DialogInterface
-import android.content.DialogInterface.OnClickListener
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -29,6 +27,14 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
@@ -42,11 +48,13 @@ import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.socket.SocketCallback
 import one.plaza.nightwaveplaza.socket.SocketClient
+import one.plaza.nightwaveplaza.view.ViewUpdateWorker
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 /**
  * Main activity that integrates the web UI, socket connection and media playback.
@@ -71,7 +79,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     // ImageViewer and backgrounds
     private var backgroundImageSrc = "solid"
     private lateinit var bgPlayerView: ImageView
-    private lateinit var loadingImage: ImageView
     private lateinit var drawer: DrawerLayout
     private var glideRequestManager: RequestManager? = null
 
@@ -97,9 +104,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         setContentView(activityMainBinding.root)
 
         bgPlayerView = findViewById(R.id.bg_view)
-        loadingImage = findViewById(R.id.loading_gif)
         glideRequestManager = Glide.with(this)
-        glideRequestManager?.load(R.raw.hourglass)?.into(loadingImage)
 
         drawer = findViewById(R.id.drawer)
         setupDrawer()
@@ -128,6 +133,35 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
         val themeColor = Settings.themeColor
         setNavigationBarColor(window, themeColor.toColorInt())
+
+        scheduleBackgroundUpdate()
+    }
+
+    /**
+     * Schedule view update every 12 hours
+     */
+    private fun scheduleBackgroundUpdate() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+//        val updateRequest = OneTimeWorkRequestBuilder<ViewUpdateWorker>()
+//            .setConstraints(constraints).build()
+//        WorkManager.getInstance(this).enqueue(updateRequest)
+
+        val updateRequest = PeriodicWorkRequestBuilder<ViewUpdateWorker>(
+            12, TimeUnit.HOURS,
+            15, TimeUnit.MINUTES
+        )
+        .setConstraints(constraints)
+        .addTag("plaza_web_update")
+        .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "plaza_web_update_job",
+            ExistingPeriodicWorkPolicy.KEEP,
+            updateRequest
+        )
     }
 
     fun setNavigationBarColor(window: Window, @ColorInt color: Int) {
@@ -189,7 +223,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 
         glideRequestManager?.let { manager ->
             bgPlayerView.let { manager.clear(it) }
-            loadingImage.let { manager.clear(it) }
         }
     }
 
@@ -346,26 +379,13 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             .setTitle("No Connection")
             .setMessage(getString(R.string.no_internet))
             .setCancelable(false)
-            .setPositiveButton("Exit", object : OnClickListener {
-                override fun onClick(dialog: DialogInterface, which: Int) {
-                    finish()
-                }
-            })
-            .setNegativeButton("Retry", object : OnClickListener {
-                override fun onClick(dialog: DialogInterface, which: Int) {
-                    dialog.cancel()
-                    webViewManager.loadWebView()
-                }
-            })
+            .setPositiveButton("Exit"
+            ) { _, _ -> finish() }
+            .setNegativeButton("Retry") { dialog, _ ->
+                dialog.cancel()
+                webViewManager.loadWebView()
+            }
         alertBuilder.create().show()
-    }
-
-    /**
-     * Hide loading animation
-     */
-    private fun stopLoadingAnimation() {
-        loadingImage.visibility = View.GONE
-        glideRequestManager?.clear(loadingImage)
     }
 
     /**
@@ -395,7 +415,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onWebViewLoaded() {
-        stopLoadingAnimation()
         if (!socketClient.isConnected) {
             socketClient.connect()
         }

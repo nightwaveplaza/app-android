@@ -27,14 +27,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/transparent" />
-
-        <ImageView
-            android:id="@+id/loading_gif"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#008080"
-            android:contentDescription="@string/loading_image"
-        />
     </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView

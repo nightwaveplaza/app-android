@@ -12,6 +12,7 @@ import okhttp3.Request
 import okio.IOException
 import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.helpers.Utils
+import timber.log.Timber
 
 class ApiClient {
     @Keep data class Status(
@@ -103,7 +104,7 @@ class ApiClient {
                 resp = response.body?.string()
             }
         } catch (err: IOException) {
-            Log.e(ApiClient::class.toString(), err.message.toString())
+            Timber.e(ApiClient::class.toString(), err.message.toString())
             throw Exception("Network exception")
         }
 
@@ -114,5 +115,27 @@ class ApiClient {
         }
     }
 
+    @Throws(Exception::class)
+    fun getManifest(): UpdateManifest {
+        val request: Request = Request.Builder().url("https://akai.plaza.one/app-view/update-manifest.json").build()
+        var resp: String?
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    throw Exception("Network error:" + " ${response.code} ${response.message}")
+                }
+                resp = response.body?.string()
+            }
+        } catch (err: IOException) {
+            Timber.e(ApiClient::class.toString(), err.message.toString())
+            throw Exception("Network exception")
+        }
 
+        try {
+            return Gson().fromJson(resp, UpdateManifest::class.java)
+        } catch (err: JsonSyntaxException) {
+            Timber.e(ApiClient::class.toString(), err.message.toString())
+            throw Exception("Status parse error")
+        }
+    }
 }
