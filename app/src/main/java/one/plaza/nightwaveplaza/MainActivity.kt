@@ -345,7 +345,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Apply language setting and update app locale
      */
     private fun setLanguage(lang: String) {
-        val locale = Locale.forLanguageTag(lang)
+        val locale = parseJsLocale(lang)
         val tag = locale.toLanguageTag()
 
         if (Settings.language == tag) {
@@ -357,6 +357,14 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         AppCompatDelegate.setApplicationLocales(
             LocaleListCompat.forLanguageTags(tag)
         )
+    }
+
+    fun parseJsLocale(jsLocale: String): Locale {
+        return when (jsLocale.lowercase()) {
+            "zh-hant", "zh-tw", "zh-hk" -> Locale.TRADITIONAL_CHINESE
+            "zh-hans", "zh-cn" -> Locale.SIMPLIFIED_CHINESE
+            else -> Locale.forLanguageTag(jsLocale)
+        }
     }
 
     /**
