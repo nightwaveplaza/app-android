@@ -57,7 +57,7 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           PLAZA_API: ${{ secrets.PLAZA_API }}
         run: |
-          echo -e "SENTRY_DSN=\"$SENTRY_DSN\"\nPLAZA_API=\"$PLAZA_API\"" > plaza.properties
+          echo -e "SENTRY_DSN=$SENTRY_DSN\nPLAZA_API=$PLAZA_API" > plaza.properties
 
       - name: Build release artifacts
         run: |
