@@ -1,23 +1,22 @@
-package one.plaza.nightwaveplaza.view
+package one.plaza.nightwaveplaza.updater
 
 import android.content.Context
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import okhttp3.Request
 import one.plaza.nightwaveplaza.api.ApiClient
-import one.plaza.nightwaveplaza.api.ViewVersionConfig
 import one.plaza.nightwaveplaza.extensions.calculateSha256
-import one.plaza.nightwaveplaza.helpers.Utils
 import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
-import java.net.URL
+import java.io.IOException
 import java.util.zip.ZipInputStream
 
 /**
  * View update worker. Checks and downloads new version.
  */
-class ViewUpdateWorker(
+class WebAppUpdateWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
@@ -44,7 +43,7 @@ class ViewUpdateWorker(
             if (targetConfig.viewVersion > currentViewVersion) {
                 Timber.d("Found new view version")
 
-                processUpdatedViewConfig(targetConfig, appContext)
+                downloadAndExtract(targetConfig, appContext)
 
                 Timber.d("View updated")
                 return Result.success()
@@ -55,31 +54,28 @@ class ViewUpdateWorker(
 
         } catch (e: Exception) {
             Timber.d("Update failed: %s", e.message)
-            return Result.failure()
+            return Result.retry()
         }
     }
 
     /**
      * Download and unzip updated view version
      */
-    private fun processUpdatedViewConfig(
-        targetConfig: ViewVersionConfig,
+    private fun downloadAndExtract(
+        targetConfig: WebAppVersionConfig,
         context: Context
     ) {
-        val updatesDir = File(context.filesDir, "updates")
+        val updatesBaseDir = File(context.filesDir, "updates")
+        val targetDir = File(updatesBaseDir, "v${targetConfig.viewVersion}")
         val tempZipFile = File(context.filesDir, "temp_update.zip")
-        val tempExtractDir = File(context.filesDir, "temp_extract_dir")
 
         // Download
-        try {
-            URL(targetConfig.viewSrc).openStream().use { input ->
-                FileOutputStream(tempZipFile).use { output ->
-                    input.copyTo(output)
-                }
+        val request = Request.Builder().url(targetConfig.viewSrc).build()
+        ApiClient.client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("Failed to download: $response")
+            FileOutputStream(tempZipFile).use { output ->
+                response.body.byteStream().copyTo(output)
             }
-        } catch (e: Exception) {
-            Timber.e("Failed to download zip file: %s", e.message)
-            throw Exception("Download failed.")
         }
 
         // Check hash
@@ -91,34 +87,28 @@ class ViewUpdateWorker(
         }
 
         // Clear temp directory
-        if (tempExtractDir.exists()) {
-            tempExtractDir.deleteRecursively()
-        }
-        tempExtractDir.mkdirs()
+        if (targetDir.exists()) targetDir.deleteRecursively()
+        targetDir.mkdirs()
 
         // Unzip file
-        unzip(tempZipFile, tempExtractDir)
-
-        // Save new version into txt
-        File(tempExtractDir, "version.txt").writeText(targetConfig.viewVersion.toString())
-
-        // Remove old updates dir
-        if (updatesDir.exists()) {
-            updatesDir.deleteRecursively()
+        try {
+            unzip(tempZipFile, targetDir)
+        } catch (e: Exception) {
+            targetDir.deleteRecursively()
+            throw e
+        } finally {
+            tempZipFile.delete()
         }
-        // and replace folder
-        tempExtractDir.renameTo(updatesDir)
-
-        tempZipFile.delete()
     }
 
     /**
      * Get current view version from local cache or from embedded
      */
     private fun getLocalViewVersion(context: Context): Int {
-        val cachedVersion = Utils.getViewCachedVersion(context)
-        val embeddedVersion = Utils.getViewEmbeddedVersion(context)
-        return maxOf(cachedVersion, embeddedVersion)
+        return maxOf(
+            WebAppVersionProvider.getDownloadedVersion(context),
+            WebAppVersionProvider.getBundledVersion(context)
+        )
     }
 
     private fun unzip(zipFile: File, targetDir: File) {
@@ -126,6 +116,7 @@ class ViewUpdateWorker(
             while (true) {
                 val entry = zis.nextEntry ?: break
                 val file = File(targetDir, entry.name)
+
                 if (entry.isDirectory) {
                     file.mkdirs()
                 } else {

@@ -19,10 +19,10 @@ import androidx.lifecycle.coroutineScope
 import androidx.media3.common.util.UnstableApi
 import androidx.webkit.WebViewAssetLoader
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.BuildConfig
+import one.plaza.nightwaveplaza.updater.WebAppAssetResolver
 import timber.log.Timber
 
 /**
@@ -38,7 +38,7 @@ class WebViewManager(
     private val webViewClient = CustomWebViewClient()
     private val lifeCycleObserver = LifeCycleObserver()
 
-    private val versionManager = ViewVersionManager(webView.context)
+    private val webAppRouter = WebAppAssetResolver(webView.context)
     private lateinit var assetLoader: WebViewAssetLoader
 
     /**
@@ -50,7 +50,7 @@ class WebViewManager(
 
         assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
-            .addPathHandler("/updates/", WebViewAssetLoader.InternalStoragePathHandler(context, versionManager.updatesDir))
+            .addPathHandler("/updates/", WebViewAssetLoader.InternalStoragePathHandler(context, webAppRouter.updatesDir))
             .build()
 
         webView.settings.apply {
@@ -89,12 +89,14 @@ class WebViewManager(
         }
 
         lifecycle.coroutineScope.launch(Dispatchers.IO) {
-            val urlToLoad = versionManager.getStartUrl()
+            val urlToLoad = webAppRouter.resolveEntryPointUrl()
 
             withContext(Dispatchers.Main) {
                 Timber.d("Loading URL: $urlToLoad")
                 webView.loadUrl(urlToLoad)
             }
+
+            webAppRouter.performCleanup()
         }
     }
 

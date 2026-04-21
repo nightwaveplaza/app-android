@@ -43,7 +43,7 @@ import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
 import one.plaza.nightwaveplaza.socket.SocketCallback
 import one.plaza.nightwaveplaza.socket.SocketClient
-import one.plaza.nightwaveplaza.view.ViewUpdateWorker
+import one.plaza.nightwaveplaza.updater.WebAppUpdateWorker
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
@@ -145,7 +145,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
 //            .setConstraints(constraints).build()
 //        WorkManager.getInstance(this).enqueue(updateRequest)
 
-        val updateRequest = PeriodicWorkRequestBuilder<ViewUpdateWorker>(
+        val updateRequest = PeriodicWorkRequestBuilder<WebAppUpdateWorker>(
             12, TimeUnit.HOURS,
             15, TimeUnit.MINUTES
         )

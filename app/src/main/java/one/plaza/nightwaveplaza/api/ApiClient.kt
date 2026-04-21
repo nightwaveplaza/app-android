@@ -8,6 +8,7 @@ import okhttp3.Request
 import okio.IOException
 import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.helpers.Utils
+import one.plaza.nightwaveplaza.updater.WebAppUpdateManifest
 import timber.log.Timber
 
 object ApiClient {
@@ -15,7 +16,7 @@ object ApiClient {
 
     private val baseUrl = BuildConfig.PLAZA_API
 
-    private val client: OkHttpClient by lazy {
+    val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
@@ -55,6 +56,6 @@ object ApiClient {
         fetch("$baseUrl/status")
 
     @Throws(ApiException::class)
-    suspend fun getManifest(): UpdateManifest =
+    suspend fun getManifest(): WebAppUpdateManifest =
         fetch("https://akai.plaza.one/app-view/update-manifest.json")
 }
