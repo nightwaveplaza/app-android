@@ -7,7 +7,7 @@ import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.helpers.Utils
 
 @UnstableApi
-class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
+class WebAppInterface(private val callback: WebViewCallback) {
     @JavascriptInterface
     fun openDrawer() {
         callback.onOpenDrawer()

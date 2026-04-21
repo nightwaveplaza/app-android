@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             lifecycle = lifecycle
         )
         webViewManager.initialize()
-        webViewManager.loadWebView()
+        webViewManager.load()
 
         // Socket initialization
         socketClient = SocketClient(
@@ -268,13 +268,13 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             super.onPlayWhenReadyChanged(playWhenReady, reason)
             if (playWhenReady && controller?.isPlaying == false) {
-                webViewManager.pushData("isBuffering", "true")
+                webViewManager.emitEvent("isBuffering", true)
             }
         }
 
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            webViewManager.pushData("isPlaying", "false")
+            webViewManager.emitEvent("isPlaying", false)
             Timber.e(error)
         }
     }
@@ -284,7 +284,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      */
     private fun pushStatus() {
         if (!appIsReady || status == null) return
-        webViewManager.pushData("onStatusUpdate", Json.mapper.encodeToString(status))
+        webViewManager.emitEvent("onStatusUpdate", status)
     }
 
     /**
@@ -308,7 +308,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      */
     private fun showWindow(view: View) {
         val windowTag = view.tag.toString()
-        webViewManager.pushData("openWindow", windowTag)
+        webViewManager.emitEvent("openWindow", windowTag)
         binding.drawer.closeDrawers()
     }
 
@@ -336,8 +336,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Update WebView with current playback state
      */
     private fun pushPlaybackState() {
-        controller?.let { webViewManager.pushData("isPlaying", it.isPlaying) }
-        webViewManager.pushData("sleepTime", Settings.sleepTargetTime)
+        controller?.let { webViewManager.emitEvent("isPlaying", it.isPlaying) }
+        webViewManager.emitEvent("sleepTime", Settings.sleepTargetTime)
     }
 
     /**
@@ -351,7 +351,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
             .setPositiveButton("Exit") { _, _ -> finish() }
             .setNegativeButton("Retry") { dialog, _ ->
                 dialog.cancel()
-                webViewManager.loadWebView()
+                webViewManager.load()
             }
             .create()
             .show()
@@ -444,22 +444,22 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onListeners(listeners: Int) {
-        webViewManager.pushData("onListenersUpdate", listeners)
+        webViewManager.emitEvent("onListenersUpdate", listeners)
     }
 
     override fun onReactions(reactions: Int) {
-        webViewManager.pushData("onReactionsUpdate", reactions)
+        webViewManager.emitEvent("onReactionsUpdate", reactions)
     }
 
     override fun onSocketConnect() {
-        webViewManager.pushData("socketConnect")
+        webViewManager.emitEvent("socketConnect", "")
     }
 
     override fun onSocketDisconnect() {
-        webViewManager.pushData("socketDisconnect")
+        webViewManager.emitEvent("socketDisconnect", "")
     }
 
     override fun onSocketReconnectFailed() {
-        webViewManager.pushData("socketReconnectFailed")
+        webViewManager.emitEvent("socketReconnectFailed", "")
     }
 }

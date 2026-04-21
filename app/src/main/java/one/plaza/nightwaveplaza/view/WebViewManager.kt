@@ -13,8 +13,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.coroutineScope
 import androidx.media3.common.util.UnstableApi
 import androidx.webkit.WebViewAssetLoader
@@ -22,7 +20,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.BuildConfig
+import one.plaza.nightwaveplaza.api.Json
 import one.plaza.nightwaveplaza.updater.WebAppAssetResolver
+import org.json.JSONObject
 import timber.log.Timber
 
 /**
@@ -31,15 +31,26 @@ import timber.log.Timber
 @UnstableApi
 class WebViewManager(
     private val callback: WebViewCallback,
-    private val webView: WebView,
+    @PublishedApi internal val webView: WebView,
     private val lifecycle: Lifecycle,
-) : LifecycleObserver {
-    var webViewLoaded = false
-    private val webViewClient = CustomWebViewClient()
-    private val lifeCycleObserver = LifeCycleObserver()
+) {
+    private var isLoaded = false
+    private val webViewClient = InternalWebViewClient()
 
     private val webAppRouter = WebAppAssetResolver(webView.context)
     private lateinit var assetLoader: WebViewAssetLoader
+
+    /**
+     * Lifecycle observer to manage WebView state
+     */
+    private val lifeCycleObserver = LifecycleEventObserver { _, event ->
+        when (event) {
+            Lifecycle.Event.ON_RESUME -> webView.onResume()
+            Lifecycle.Event.ON_PAUSE -> if (!isLoaded) webView.stopLoading() else webView.onPause()
+            Lifecycle.Event.ON_DESTROY -> destroy()
+            else -> {}
+        }
+    }
 
     /**
      * Initializes WebView with required settings and interfaces
@@ -63,7 +74,7 @@ class WebViewManager(
         }
 
         webView.apply {
-            addJavascriptInterface(WebViewJavaScriptHandler(callback), "AndroidInterface")
+            addJavascriptInterface(WebAppInterface(callback), "AndroidInterface")
             setBackgroundColor(Color.TRANSPARENT)
             setLayerType(View.LAYER_TYPE_HARDWARE, null)
             webViewClient = this@WebViewManager.webViewClient
@@ -80,7 +91,7 @@ class WebViewManager(
      * Starts the WebView loading process using either the config URL
      * or fetching the latest from API
      */
-    fun loadWebView() {
+    fun load() {
         Timber.d("Load WebView")
 
         if (BuildConfig.PLAZA_URL_OVERRIDE.isNotEmpty()) {
@@ -100,28 +111,12 @@ class WebViewManager(
         }
     }
 
-    /**
-     * Pauses WebView and cancels current tasks
-     */
-    fun pauseWebView() {
-        if (!webViewLoaded) {
-            webView.stopLoading()
-        } else {
-            webView.onPause()
-        }
-    }
-
-    /**
-     * Resumes WebView operation
-     */
-    fun resumeWebView() {
-        webView.onResume()
-    }
-
     fun destroy() {
-        webViewLoaded = false
+        isLoaded = false
         webView.apply {
+            removeJavascriptInterface("AndroidInterface")
             stopLoading()
+            clearHistory()
             removeAllViews()
             loadUrl("about:blank")
             destroy()
@@ -132,14 +127,20 @@ class WebViewManager(
     /**
      * Sends data to JavaScript via event emission
      */
-    fun pushData(action: String, payload: Any? = null) {
-        val call = when (payload) {
-            null -> "window['emitter'].emit('$action')"
-            is String -> "window['emitter'].emit('$action', '$payload')"
-            else -> "window['emitter'].emit('$action', $payload)"
+    inline fun <reified T> emitEvent(action: String, payload: T? = null) {
+        val arg = when (payload) {
+            null -> "null"
+            is Boolean, is Number -> payload.toString()
+            is String -> JSONObject.quote(payload)
+            else -> try {
+                Json.mapper.encodeToString(payload)
+            } catch (_: Exception) {
+                JSONObject.quote(payload.toString())
+            }
         }
+
         webView.post {
-            webView.evaluateJavascript(call, null)
+            webView.evaluateJavascript("window.emitter.emit('$action', $arg)", null)
         }
     }
 
@@ -147,14 +148,14 @@ class WebViewManager(
      * Handles successful WebView load event
      */
     fun onWebViewLoaded() {
-        webViewLoaded = true
+        isLoaded = true
         callback.onWebViewLoaded()
     }
 
     /**
      * Custom WebViewClient to handle page loading and errors
      */
-    private inner class CustomWebViewClient : WebViewClient() {
+    private inner class InternalWebViewClient : WebViewClient() {
         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
             return assetLoader.shouldInterceptRequest(request.url)
         }
@@ -170,8 +171,7 @@ class WebViewManager(
 
             // Open external links in browser
             return if (!request.url.toString().startsWith("https://appassets.androidplatform.net")) {
-                val intent = Intent(Intent.ACTION_VIEW, request.url)
-                view.context.startActivity(intent)
+                view.context.startActivity(Intent(Intent.ACTION_VIEW, request.url))
                 true
             } else {
                 false
@@ -190,38 +190,14 @@ class WebViewManager(
         }
 
         override fun onReceivedError(
-            view: WebView?,
-            request: WebResourceRequest?,
-            error: WebResourceError?
+            view: WebView,
+            request: WebResourceRequest,
+            error: WebResourceError
         ) {
             super.onReceivedError(view, request, error)
-            if (error != null) {
-                Timber.e(error.description.toString())
-            }
-        }
-    }
-
-    /**
-     * Lifecycle observer to manage WebView state
-     */
-    inner class LifeCycleObserver : LifecycleEventObserver {
-        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    resumeWebView()
-                    Timber.d("Lifecycle: onResume")
-                }
-
-                Lifecycle.Event.ON_PAUSE -> {
-                    pauseWebView()
-                    Timber.d("Lifecycle: onPause")
-                }
-
-                Lifecycle.Event.ON_DESTROY -> {
-                    destroy()
-                }
-
-                else -> {}
+            if (request.isForMainFrame) {
+                Timber.e("Main frame load error: ${error.errorCode} - ${error.description}")
+                callback.onWebViewLoadFail()
             }
         }
     }
