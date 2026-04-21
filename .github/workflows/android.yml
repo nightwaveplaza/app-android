@@ -61,6 +61,7 @@ jobs:
 
       - name: Build release artifacts
         run: |
+          ./gradlew fetchAndEmbedView
           ./gradlew assembleRelease --stacktrace
           ./gradlew bundleRelease
 
