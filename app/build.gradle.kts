@@ -14,7 +14,7 @@ val plazaProperties = Properties().apply {
 }
 
 // View version that will be shipped with the apk
-val BASE_VIEW_VERSION = 242
+val BASE_VIEW_VERSION = 243
 
 android {
     namespace = "one.plaza.nightwaveplaza"
@@ -25,7 +25,7 @@ android {
         minSdk = 23
         targetSdk = 35
         versionCode = 243
-        versionName = "2.1.3"
+        versionName = "2.1.4"
 
         buildFeatures {
             buildConfig = true
