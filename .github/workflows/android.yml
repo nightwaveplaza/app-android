@@ -6,7 +6,9 @@ env:
   RELEASE_SIGN_KEY_PASSWORD: ${{ secrets.RELEASE_SIGN_KEY_PASSWORD }}
 
 on:
-  workflow_dispatch: null
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build:
@@ -20,10 +22,10 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
           cache: gradle
 
@@ -32,12 +34,16 @@ jobs:
           chmod +x gradlew
           echo "version_name=$(${{github.workspace}}/gradlew -q printVersionName)" >> $GITHUB_ENV
 
-      - name: Check for Tag
+      - name: Verify Tag matches Version
         run: |
-          if [ $(git tag -l "v$version_name") ]; then
-            echo "Tag v$version_name already exist"
+          TAG_NAME="${{ github.ref_name }}"
+          APP_VERSION="v${{ env.version_name }}"
+          
+          if [ "$TAG_NAME" != "$APP_VERSION" ]; then
+            echo "::error::Tag name ($TAG_NAME) does not match Gradle version ($APP_VERSION)!"
             exit 1
           fi
+          echo "Tag and version match: $TAG_NAME"
 
       - name: Checkout keystore repo
         uses: actions/checkout@v4
@@ -46,15 +52,12 @@ jobs:
           token: ${{ secrets.KEYSTORE_ACCESS_TOKEN }}
           path: app/keystore
 
-      - name: Fill ACRA credentials
+      - name: Fill credentials
         env:
-          ACRA_URI: ${{ secrets.ACRA_URI }}
-          ACRA_LOGIN: ${{ secrets.ACRA_LOGIN }}
-          ACRA_PASS: ${{ secrets.ACRA_PASS }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           PLAZA_API: ${{ secrets.PLAZA_API }}
         run: |
-          echo -e "ACRA_URI=\"$ACRA_URI\"\nACRA_LOGIN=\"$ACRA_LOGIN\"\nACRA_PASS=\"$ACRA_PASS\"" > acra.properties
-          echo -e "PLAZA_API=\"$PLAZA_API\"" > plaza.properties
+          echo -e "SENTRY_DSN=\"$SENTRY_DSN\"\nPLAZA_API=\"$PLAZA_API\"" > plaza.properties
 
       - name: Build release artifacts
         run: |
@@ -62,27 +65,21 @@ jobs:
           ./gradlew bundleRelease
 
       - name: Rename release file
-        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-$version_name.apk
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: Upload artifact
           path: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
 
-      - name: Get Commits since last Release
-        id: changes
-        uses: simbo/changes-since-last-release-action@v1
-
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ env.version_name }}
+          tag_name: ${{ github.ref_name }}
           name: Release ${{ env.version_name }}
           files: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
           draft: false
           prerelease: false
-          body: |
-            Changes since ${{ steps.changes.outputs.last-tag }}:
-            ${{ steps.changes.outputs.log }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
