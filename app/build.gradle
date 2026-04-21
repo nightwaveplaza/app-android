@@ -3,11 +3,6 @@ plugins {
 }
 
 // Load acra local properties
-Properties acraProperties = new Properties()
-if (project.rootProject.file('acra.properties').canRead()) {
-    acraProperties.load(project.rootProject.file('acra.properties').newDataInputStream())
-}
-// Load acra local properties
 Properties plazaProperties = new Properties()
 if (project.rootProject.file('plaza.properties').canRead()) {
     plazaProperties.load(project.rootProject.file('plaza.properties').newDataInputStream())
@@ -35,11 +30,12 @@ android {
             useSupportLibrary true
         }
 
-        buildConfigField 'String', 'ACRA_URI', acraProperties.getProperty('ACRA_URI', '""')
-        buildConfigField 'String', 'ACRA_LOGIN', acraProperties.getProperty('ACRA_LOGIN', '""')
-        buildConfigField 'String', 'ACRA_PASS', acraProperties.getProperty('ACRA_PASS', '""')
         buildConfigField 'String', 'PLAZA_API', plazaProperties.getProperty('PLAZA_API', '""')
         buildConfigField 'String', 'PLAZA_URL_OVERRIDE', plazaProperties.getProperty('PLAZA_URL_OVERRIDE', '""')
+
+        manifestPlaceholders = [
+            sentryDsn: plazaProperties.getProperty("SENTRY_DSN", "")
+        ]
     }
 
     signingConfigs {
@@ -109,13 +105,12 @@ dependencies {
 
     implementation 'com.github.bumptech.glide:glide:5.0.5'
 
-    implementation 'ch.acra:acra-http:5.13.1'
-
     implementation ('io.socket:socket.io-client:2.1.2') {
         exclude group: 'org.json', module: 'json'
     }
 
     implementation 'com.jakewharton.timber:timber:5.0.1'
+    implementation 'io.sentry:sentry-android:8.+'
     //debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
 }
 
