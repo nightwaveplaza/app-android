@@ -1,7 +1,9 @@
 package one.plaza.nightwaveplaza.api
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class UpdateManifest(
-    @SerializedName("versions") val versions: List<ViewVersionConfig>
+    @SerialName("versions") val versions: List<ViewVersionConfig>
 )

@@ -1,9 +1,8 @@
 import java.util.Properties
-import org.gradle.api.GradleException
-import java.net.URI
 
 plugins {
     id("com.android.application")
+    kotlin("plugin.serialization") version "2.3.20"
 }
 
 // Load local properties
@@ -94,6 +93,7 @@ android {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.google.android.material:material:1.13.0")
     implementation("androidx.activity:activity-ktx:1.12.2")
@@ -109,7 +109,6 @@ dependencies {
     implementation("androidx.media3:media3-session:1.9.0")
     implementation("androidx.media3:media3-exoplayer-hls:1.9.0")
 
-    implementation("com.google.code.gson:gson:2.13.2")
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
     implementation("androidx.webkit:webkit:1.15.0")
 

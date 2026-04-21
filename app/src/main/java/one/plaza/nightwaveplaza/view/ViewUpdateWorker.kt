@@ -29,9 +29,8 @@ class ViewUpdateWorker(
         try {
             Timber.d("Checking new view version...")
 
-            val client = ApiClient()
             val currentViewVersion = getLocalViewVersion(appContext)
-            val manifest = client.getManifest()
+            val manifest = ApiClient.getManifest()
 
             val targetConfig = manifest.versions
                 .filter { it.minAndroid <= currentAppVersionCode }

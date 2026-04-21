@@ -30,9 +30,6 @@ import androidx.media3.session.SessionToken
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequest
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.bumptech.glide.Glide
@@ -41,8 +38,9 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withC
 import com.google.android.material.navigation.NavigationView
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
-import com.google.gson.Gson
-import one.plaza.nightwaveplaza.api.ApiClient
+import kotlinx.serialization.encodeToString
+import one.plaza.nightwaveplaza.api.Json
+import one.plaza.nightwaveplaza.api.Status
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
@@ -85,7 +83,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     // Socket client
     private lateinit var socketClient: SocketClient
 
-    private var status: ApiClient.Status? = null
+    private var status: Status? = null
 
     private var appIsReady = false
 
@@ -306,7 +304,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private fun pushStatus() {
         if (appIsReady) {
             if (status != null) {
-                webViewManager.pushData("onStatusUpdate", Gson().toJson(status))
+                webViewManager.pushData("onStatusUpdate", Json.mapper.encodeToString(status))
             } else {
                 Timber.d("Attempt to push status not initialized yet.")
             }
@@ -498,7 +496,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onStatus(s: String) {
-        status = Gson().fromJson(s, ApiClient.Status::class.java)
+        status = Json.mapper.decodeFromString(s)
         pushStatus()
     }
 

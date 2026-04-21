@@ -20,16 +20,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
-import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionCommands
 import androidx.media3.session.SessionResult
-import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,10 +36,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.api.ApiClient
+import one.plaza.nightwaveplaza.api.Song
 import one.plaza.nightwaveplaza.helpers.Keys
 import one.plaza.nightwaveplaza.helpers.Utils
 import timber.log.Timber
-import java.io.IOException
 
 /**
  * Provides background audio playback capabilities.
@@ -257,7 +254,7 @@ class PlayerService : MediaLibraryService() {
         serviceScope.launch(Dispatchers.IO) {
             metadataUpdating.withLock {
                 runCatching {
-                    val status = ApiClient().getStatus()
+                    val status = ApiClient.getStatus()
                     if (status.song.id.isNotEmpty()) {
                         withContext(Dispatchers.Main) {
                             positionTracker.position = status.position * 1L
@@ -267,11 +264,7 @@ class PlayerService : MediaLibraryService() {
                         }
                     }
                 }.onFailure { error ->
-                    when (error) {
-                        is IOException -> Timber.w(error, "Network error during metadata update")
-                        is JsonParseException -> Timber.e(error, "Invalid API response format")
-                        else -> Timber.e(error, "Unknown error during metadata update")
-                    }
+                    Timber.e(error, "Invalid API response format")
                 }
             }
         }
@@ -280,7 +273,7 @@ class PlayerService : MediaLibraryService() {
     /**
      * Set new metadata to session
      */
-    private fun setNewMetadata(song: ApiClient.Song) {
+    private fun setNewMetadata(song: Song) {
         player.currentMediaItem?.let { currentItem ->
             if (song.artist == currentItem.mediaMetadata.artist && song.title == currentItem.mediaMetadata.title) {
                 return
