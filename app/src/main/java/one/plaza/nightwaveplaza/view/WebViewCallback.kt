@@ -8,7 +8,7 @@ interface WebViewCallback {
     fun onPlayAudio()
     fun onSetBackground(backgroundSrc: String)
     fun onToggleFullscreen()
-    fun onSetSleepTimer(timestamp: Long)
+    fun onSetSleepTimer(sleepTime: Long)
     fun onSetLanguage(lang: String)
     fun onSetThemeColor(color: String)
     fun onReady()

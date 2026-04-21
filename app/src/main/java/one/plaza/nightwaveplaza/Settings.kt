@@ -5,7 +5,7 @@ import java.util.Locale
 
 object Settings {
     private const val IS_PLAYING = "IsPlaying"
-    private const val SLEEP_TIME = "sleepTimer"
+    private const val SLEEP_TARGET_TIME = "sleepTargetTimer"
     private const val USER_TOKEN = "UserToken"
     private const val FULLSCREEN = "Fullscreen"
     private const val AUDIO_LQ = "AudioLowQuality"
@@ -20,12 +20,12 @@ object Settings {
         }
         get() = StorageHelper.load(IS_PLAYING, false)
 
-    var sleepTime: Long = 0L
+    var sleepTargetTime: Long = 0L
         set(v) {
-            StorageHelper.save(SLEEP_TIME, v)
+            StorageHelper.save(SLEEP_TARGET_TIME, v)
             field = v
         }
-        get() = StorageHelper.load(SLEEP_TIME, 0L)
+        get() = StorageHelper.load(SLEEP_TARGET_TIME, 0L)
 
     var userToken: String = ""
         set(v) {

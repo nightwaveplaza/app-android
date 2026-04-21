@@ -17,13 +17,15 @@ fun MediaController.play(context: Context) {
 }
 
 fun prepareUri(): MediaItem {
-    return MediaItem.Builder().setUri("https://radio.plaza.one/hls.m3u8").setLiveConfiguration(
+    return MediaItem.Builder()
+        .setMediaId("nightwave_live_stream")
+        .setUri("https://radio.plaza.one/hls.m3u8").setLiveConfiguration(
         MediaItem.LiveConfiguration.Builder().setMaxOffsetMs(5000).build()
     ).build()
 }
 
 fun MediaController.setSleepTimer(time: Long) {
-    var b = Bundle()
+    val b = Bundle()
     b.putLong("time", time)
     sendCustomCommand(SessionCommand(Keys.SET_TIMER, Bundle.EMPTY), b)
 }

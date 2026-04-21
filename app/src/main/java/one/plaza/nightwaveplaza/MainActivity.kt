@@ -373,7 +373,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         currentController?.let {
             webViewManager.pushData("isPlaying", it.isPlaying)
         }
-        webViewManager.pushData("sleepTime", Settings.sleepTime)
+        webViewManager.pushData("sleepTime", Settings.sleepTargetTime)
     }
 
     /**
@@ -459,9 +459,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         }
     }
 
-    override fun onSetSleepTimer(time: Long) {
+    override fun onSetSleepTimer(sleepTime: Long) {
         runOnUiThread {
-            controller?.setSleepTimer(time)
+            controller?.setSleepTimer(sleepTime)
         }
     }
 

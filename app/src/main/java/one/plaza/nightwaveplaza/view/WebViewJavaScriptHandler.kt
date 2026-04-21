@@ -39,8 +39,8 @@ class WebViewJavaScriptHandler(private val callback: WebViewCallback) {
     }
 
     @JavascriptInterface
-    fun setSleepTimer(timestamp: Long) {
-        callback.onSetSleepTimer(timestamp)
+    fun setSleepTimer(sleepTime: Long) {
+        callback.onSetSleepTimer(sleepTime)
     }
 
     @JavascriptInterface

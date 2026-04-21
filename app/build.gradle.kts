@@ -14,7 +14,7 @@ val plazaProperties = Properties().apply {
 }
 
 // View version that will be shipped with the apk
-val BASE_VIEW_VERSION = 243
+val BASE_VIEW_VERSION = 242
 
 android {
     namespace = "one.plaza.nightwaveplaza"
@@ -24,7 +24,7 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 35
-        versionCode = 242
+        versionCode = 243
         versionName = "2.1.3"
 
         buildFeatures {
@@ -105,9 +105,9 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("androidx.work:work-runtime-ktx:2.11.1")
 
-    implementation("androidx.media3:media3-exoplayer:1.9.0")
-    implementation("androidx.media3:media3-session:1.9.0")
-    implementation("androidx.media3:media3-exoplayer-hls:1.9.0")
+    implementation("androidx.media3:media3-exoplayer:1.10.0")
+    implementation("androidx.media3:media3-session:1.10.0")
+    implementation("androidx.media3:media3-exoplayer-hls:1.10.0")
 
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
     implementation("androidx.webkit:webkit:1.15.0")
