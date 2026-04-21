@@ -124,6 +124,23 @@ tasks.register('printVersionName') {
     println (android.defaultConfig.versionName + "-b" + android.defaultConfig.versionCode)
 }
 
+tasks.register('createReleaseTag') {
+    doLast {
+        def versionName = android.defaultConfig.versionName + "-b" + android.defaultConfig.versionCode
+        def tagName = "v${versionName}"
+
+        println "Creating tag: $tagName..."
+        def process = ['git', 'tag', '-a', tagName, '-m', "Release ${versionName}"].execute()
+        process.waitFor()
+        if (process.exitValue() == 0) {
+            println "Tag $tagName created."
+        } else {
+            def errorText = process.err.text
+            println "Error creating tag: $errorText"
+        }
+    }
+}
+
 // Download and embed view that will be shipped with apk
 tasks.register('fetchAndEmbedView') {
     doLast {
