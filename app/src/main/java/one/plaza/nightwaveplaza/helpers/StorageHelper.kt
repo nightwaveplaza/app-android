@@ -2,49 +2,41 @@ package one.plaza.nightwaveplaza.helpers
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
 import androidx.core.content.edit
 
 object StorageHelper {
-    private lateinit var sharedPreferences: SharedPreferences
+    @PublishedApi
+    internal lateinit var prefs: SharedPreferences
 
-    fun Context.initStorage() {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+    fun init(context: Context) {
+        val appContext = context.applicationContext
+        prefs = appContext.getSharedPreferences(
+            "${appContext.packageName}_preferences",
+            Context.MODE_PRIVATE
+        )
     }
 
-    // Save-load strings
-    fun save(name: String, value: String) {
-        sharedPreferences.edit { putString(name, value) }
+    inline fun <reified T> save(key: String, value: T) {
+        prefs.edit {
+            when (value) {
+                is String -> putString(key, value)
+                is Int -> putInt(key, value)
+                is Long -> putLong(key, value)
+                is Boolean -> putBoolean(key, value)
+                is Float -> putFloat(key, value)
+                else -> throw IllegalArgumentException("Type ${T::class.java.simpleName} is not supported by SharedPreferences")
+            }
+        }
     }
 
-    fun load(name: String, def: String): String {
-        return sharedPreferences.getString(name, def) ?: def
-    }
-
-    // Save-load int
-    fun save(name: String, value: Int) {
-        sharedPreferences.edit { putInt(name, value) }
-    }
-
-    fun load(name: String, def: Int): Int {
-        return sharedPreferences.getInt(name, def)
-    }
-
-    // Save-load Long
-    fun save(name: String, value: Long) {
-        sharedPreferences.edit { putLong(name, value) }
-    }
-
-    fun load(name: String, def: Long): Long {
-        return sharedPreferences.getLong(name, def)
-    }
-
-    // Save-load boolean
-    fun save(name: String, value: Boolean) {
-        sharedPreferences.edit { putBoolean(name, value) }
-    }
-
-    fun load(name: String, def: Boolean): Boolean {
-        return sharedPreferences.getBoolean(name, def)
+    inline fun <reified T> load(key: String, default: T): T {
+        return when (default) {
+            is String -> prefs.getString(key, default) as T
+            is Int -> prefs.getInt(key, default) as T
+            is Long -> prefs.getLong(key, default) as T
+            is Boolean -> prefs.getBoolean(key, default) as T
+            is Float -> prefs.getFloat(key, default) as T
+            else -> throw IllegalArgumentException("Type ${T::class.java.simpleName} is not supported by SharedPreferences")
+        }
     }
 }

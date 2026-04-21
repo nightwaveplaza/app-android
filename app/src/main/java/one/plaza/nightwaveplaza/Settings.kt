@@ -2,70 +2,30 @@ package one.plaza.nightwaveplaza
 
 import one.plaza.nightwaveplaza.helpers.StorageHelper
 import java.util.Locale
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
+
+inline fun <reified T> preference(
+    key: String,
+    crossinline defaultValueProvider: () -> T
+): ReadWriteProperty<Any?, T> = object : ReadWriteProperty<Any?, T> {
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        // Evaluates the lambda on every read if the key is missing
+        return StorageHelper.load(key, defaultValueProvider())
+    }
+
+    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+        StorageHelper.save(key, value)
+    }
+}
 
 object Settings {
-    private const val IS_PLAYING = "IsPlaying"
-    private const val SLEEP_TARGET_TIME = "sleepTargetTimer"
-    private const val USER_TOKEN = "UserToken"
-    private const val FULLSCREEN = "Fullscreen"
-    private const val AUDIO_LQ = "AudioLowQuality"
-    private const val VIEW_SRC_URI = "ViewVersion"
-    private const val LANGUAGE = "Language"
-    private const val THEME_COLOR = "ThemeColor"
-
-    var isPlaying: Boolean = false
-        set(v) {
-            StorageHelper.save(IS_PLAYING, v)
-            field = v
-        }
-        get() = StorageHelper.load(IS_PLAYING, false)
-
-    var sleepTargetTime: Long = 0L
-        set(v) {
-            StorageHelper.save(SLEEP_TARGET_TIME, v)
-            field = v
-        }
-        get() = StorageHelper.load(SLEEP_TARGET_TIME, 0L)
-
-    var userToken: String = ""
-        set(v) {
-            StorageHelper.save(USER_TOKEN, v)
-            field = v
-        }
-        get() = StorageHelper.load(USER_TOKEN, "")
-
-    var fullScreen: Boolean = false
-        set(v) {
-            StorageHelper.save(FULLSCREEN, v)
-            field = v
-        }
-        get() = StorageHelper.load(FULLSCREEN, false)
-
-    var lowQualityAudio: Boolean = false
-        set(v) {
-            StorageHelper.save(AUDIO_LQ, v)
-            field = v
-        }
-        get() = StorageHelper.load(AUDIO_LQ, false)
-
-    var viewUri: String = ""
-        set(v) {
-            StorageHelper.save(VIEW_SRC_URI, v)
-            field = v
-        }
-        get() = StorageHelper.load(VIEW_SRC_URI, "")
-
-    var language: String = ""
-        set(v) {
-            StorageHelper.save(LANGUAGE, v)
-            field = v
-        }
-        get() = StorageHelper.load(LANGUAGE, Locale.getDefault().language)
-
-    var themeColor: String = ""
-        set(v) {
-            StorageHelper.save(THEME_COLOR, v)
-            field = v
-        }
-        get() = StorageHelper.load(THEME_COLOR, "#c0c0c0")
+    var isPlaying       by preference("IsPlaying") { false }
+    var sleepTargetTime by preference("sleepTargetTimer") { 0L }
+    var userToken       by preference("UserToken") { "" }
+    var fullScreen      by preference("Fullscreen") { false }
+    var lowQualityAudio by preference("AudioLowQuality") { false }
+    var language        by preference("Language") { Locale.getDefault().language }
+    var themeColor      by preference("ThemeColor") { "#c0c0c0" }
 }
