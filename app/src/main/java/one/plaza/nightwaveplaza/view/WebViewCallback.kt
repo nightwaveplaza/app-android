@@ -12,5 +12,4 @@ interface WebViewCallback {
     fun onSetLanguage(lang: String)
     fun onSetThemeColor(color: String)
     fun onReady()
-    fun onReconnectRequest()
 }

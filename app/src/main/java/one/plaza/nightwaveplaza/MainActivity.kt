@@ -36,18 +36,13 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withC
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.launch
-import one.plaza.nightwaveplaza.api.Json
-import one.plaza.nightwaveplaza.api.Status
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
-import one.plaza.nightwaveplaza.socket.SocketCallback
-import one.plaza.nightwaveplaza.socket.SocketClient
 import one.plaza.nightwaveplaza.updater.WebAppUpdateWorker
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
 import timber.log.Timber
-import java.lang.ref.WeakReference
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -56,7 +51,7 @@ import java.util.concurrent.TimeUnit
  * Handles the communication between UI interactions, WebView, Socket and the background player service.
  */
 @UnstableApi
-class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
+class MainActivity : AppCompatActivity(), WebViewCallback {
     private lateinit var binding: ActivityMainBinding
 
     // Controller for media playback operations
@@ -71,10 +66,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     private var backgroundImageSrc = "solid"
     private var glideRequestManager: RequestManager? = null
 
-    // Socket client
-    private lateinit var socketClient: SocketClient
-
-    private var status: Status? = null
     private var appIsReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,13 +88,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         )
         webViewManager.initialize()
         webViewManager.load()
-
-        // Socket initialization
-        socketClient = SocketClient(
-            callback = WeakReference(this),
-            lifecycle = lifecycle
-        )
-        socketClient.initialize()
 
         // Layout
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -268,23 +252,15 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
             super.onPlayWhenReadyChanged(playWhenReady, reason)
             if (playWhenReady && controller?.isPlaying == false) {
-                webViewManager.emitEvent("isBuffering", true)
+                webViewManager.emitEvent("player:buffering", true)
             }
         }
 
         override fun onPlayerError(error: PlaybackException) {
             super.onPlayerError(error)
-            webViewManager.emitEvent("isPlaying", false)
+            webViewManager.emitEvent("player:playing", false)
             Timber.e(error)
         }
-    }
-
-    /**
-     * Push current status to the WebView if available
-     */
-    private fun pushStatus() {
-        if (!appIsReady || status == null) return
-        webViewManager.emitEvent("onStatusUpdate", status)
     }
 
     /**
@@ -308,7 +284,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      */
     private fun showWindow(view: View) {
         val windowTag = view.tag.toString()
-        webViewManager.emitEvent("openWindow", windowTag)
+        webViewManager.emitEvent("window:open", windowTag)
         binding.drawer.closeDrawers()
     }
 
@@ -336,8 +312,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
      * Update WebView with current playback state
      */
     private fun pushPlaybackState() {
-        controller?.let { webViewManager.emitEvent("isPlaying", it.isPlaying) }
-        webViewManager.emitEvent("sleepTime", Settings.sleepTargetTime)
+        controller?.let { webViewManager.emitEvent("player:playing", it.isPlaying) }
+        webViewManager.emitEvent("player:sleeptime", Settings.sleepTargetTime)
     }
 
     /**
@@ -383,7 +359,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     }
 
     override fun onWebViewLoaded() {
-        if (!socketClient.isConnected) socketClient.connect()
     }
 
     override fun onOpenDrawer() {
@@ -426,40 +401,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback, SocketCallback {
     override fun onReady() {
         appIsReady = true
         lifecycleScope.launch {
-            pushStatus()
             pushPlaybackState()
         }
-    }
-
-    /**
-     * Socket callback implementations
-     */
-    override fun onReconnectRequest() {
-        socketClient.connect()
-    }
-
-    override fun onStatus(s: String) {
-        status = Json.mapper.decodeFromString(s)
-        pushStatus()
-    }
-
-    override fun onListeners(listeners: Int) {
-        webViewManager.emitEvent("onListenersUpdate", listeners)
-    }
-
-    override fun onReactions(reactions: Int) {
-        webViewManager.emitEvent("onReactionsUpdate", reactions)
-    }
-
-    override fun onSocketConnect() {
-        webViewManager.emitEvent("socketConnect", "")
-    }
-
-    override fun onSocketDisconnect() {
-        webViewManager.emitEvent("socketDisconnect", "")
-    }
-
-    override fun onSocketReconnectFailed() {
-        webViewManager.emitEvent("socketReconnectFailed", "")
     }
 }

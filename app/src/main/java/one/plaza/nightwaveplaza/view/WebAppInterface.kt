@@ -69,11 +69,6 @@ class WebAppInterface(private val callback: WebViewCallback) {
     }
 
     @JavascriptInterface
-    fun socketReconnect() {
-        callback.onReconnectRequest()
-    }
-
-    @JavascriptInterface
     fun setThemeColor(color: String) {
         callback.onSetThemeColor(color)
     }

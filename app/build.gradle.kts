@@ -13,9 +13,6 @@ val plazaProperties = Properties().apply {
     }
 }
 
-// View version that will be shipped with the apk
-val BASE_VIEW_VERSION = 243
-
 android {
     namespace = "one.plaza.nightwaveplaza"
     compileSdk = 36
@@ -24,7 +21,7 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 35
-        versionCode = 243
+        versionCode = 244
         versionName = "2.1.4"
 
         buildFeatures {
@@ -112,10 +109,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.15.0")
 
     implementation("com.github.bumptech.glide:glide:5.0.7")
-
-    implementation("io.socket:socket.io-client:2.1.2") {
-        exclude(group = "org.json", module = "json")
-    }
 
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("io.sentry:sentry-android:8.39.1")

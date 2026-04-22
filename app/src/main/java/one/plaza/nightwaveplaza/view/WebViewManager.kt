@@ -45,8 +45,14 @@ class WebViewManager(
      */
     private val lifeCycleObserver = LifecycleEventObserver { _, event ->
         when (event) {
-            Lifecycle.Event.ON_RESUME -> webView.onResume()
-            Lifecycle.Event.ON_PAUSE -> if (!isLoaded) webView.stopLoading() else webView.onPause()
+            Lifecycle.Event.ON_START -> {
+                webView.onResume()
+                emitEvent("app:start", "null")
+            }
+            Lifecycle.Event.ON_PAUSE -> {
+                emitEvent("app:stop", "null")
+                if (!isLoaded) webView.stopLoading() else webView.onPause()
+            }
             Lifecycle.Event.ON_DESTROY -> destroy()
             else -> {}
         }
@@ -124,12 +130,8 @@ class WebViewManager(
         lifecycle.removeObserver(lifeCycleObserver)
     }
 
-    /**
-     * Sends data to JavaScript via event emission
-     */
-    inline fun <reified T> emitEvent(action: String, payload: T? = null) {
+    inline fun <reified T> emitEvent(action: String, payload: T) {
         val arg = when (payload) {
-            null -> "null"
             is Boolean, is Number -> payload.toString()
             is String -> JSONObject.quote(payload)
             else -> try {
@@ -138,9 +140,9 @@ class WebViewManager(
                 JSONObject.quote(payload.toString())
             }
         }
-
         webView.post {
-            webView.evaluateJavascript("window.emitter.emit('$action', $arg)", null)
+            val script = "window.dispatchEvent(new CustomEvent('$action', { detail: $arg }));"
+            webView.evaluateJavascript(script, null)
         }
     }
 
