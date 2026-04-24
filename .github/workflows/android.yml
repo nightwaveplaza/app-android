@@ -37,7 +37,7 @@ jobs:
       - name: Verify Tag matches Version
         run: |
           TAG_NAME="${{ github.ref_name }}"
-          APP_VERSION="v${{ env.version_name }}"
+          APP_VERSION="${{ env.version_name }}"
           
           if [[ "$TAG_NAME" == *-dev* ]]; then
             echo "IS_DEV=true" >> $GITHUB_ENV
