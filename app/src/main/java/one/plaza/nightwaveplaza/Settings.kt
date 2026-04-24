@@ -28,4 +28,5 @@ object Settings {
     var lowQualityAudio by preference("AudioLowQuality") { false }
     var language        by preference("Language") { Locale.getDefault().language }
     var themeColor      by preference("ThemeColor") { "#c0c0c0" }
+    var useDevChannel   by preference("DevChannel") { false }
 }

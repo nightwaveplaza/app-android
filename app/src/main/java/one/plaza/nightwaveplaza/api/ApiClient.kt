@@ -56,6 +56,6 @@ object ApiClient {
         fetch("$baseUrl/status")
 
     @Throws(ApiException::class)
-    suspend fun getManifest(): WebAppUpdateManifest =
-        fetch("https://akai.plaza.one/app-view/update-manifest.json")
+    suspend fun getManifest(manifestFileName: String): WebAppUpdateManifest =
+        fetch("https://akai.plaza.one/app-view/${manifestFileName}")
 }

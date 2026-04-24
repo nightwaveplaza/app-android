@@ -4,8 +4,10 @@ import android.content.ComponentName
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.View
 import android.view.Window
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -27,7 +29,9 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.bumptech.glide.Glide
@@ -91,11 +95,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
 
         // Layout
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        applyBottomNavInset(findViewById(R.id.viewLayout))
-        applyBottomNavInset(findViewById(R.id.navBottomBlock))
+        applyBottomNavInset(binding.viewLayout)
+        applyBottomNavInset(binding.navBottomBlock)
 
         setNavigationBarColor(window, Settings.themeColor.toColorInt())
         scheduleBackgroundUpdate()
+        setVersionListeners()
     }
 
     private fun setupNavigationListeners() {
@@ -121,27 +126,35 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
      * Schedule view update every 12 hours
      */
     private fun scheduleBackgroundUpdate() {
+        val workManager = WorkManager.getInstance(this)
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-//        val updateRequest = OneTimeWorkRequestBuilder<ViewUpdateWorker>()
-//            .setConstraints(constraints).build()
-//        WorkManager.getInstance(this).enqueue(updateRequest)
+        if (Settings.useDevChannel) {
+            val updateRequest = OneTimeWorkRequestBuilder<WebAppUpdateWorker>()
+                .setConstraints(constraints)
+                .build()
+            workManager.enqueueUniqueWork(
+                "plaza_dev_update",
+                ExistingWorkPolicy.REPLACE,
+                updateRequest
+            )
+        } else {
+            val updateRequest = PeriodicWorkRequestBuilder<WebAppUpdateWorker>(
+                12, TimeUnit.HOURS,
+                15, TimeUnit.MINUTES
+            )
+                .setConstraints(constraints)
+                .addTag("plaza_update")
+                .build()
 
-        val updateRequest = PeriodicWorkRequestBuilder<WebAppUpdateWorker>(
-            12, TimeUnit.HOURS,
-            15, TimeUnit.MINUTES
-        )
-        .setConstraints(constraints)
-        .addTag("plaza_web_update")
-        .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "plaza_web_update_job",
-            ExistingPeriodicWorkPolicy.KEEP,
-            updateRequest
-        )
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "plaza_update_job",
+                ExistingPeriodicWorkPolicy.KEEP,
+                updateRequest
+            )
+        }
     }
 
     fun setNavigationBarColor(window: Window, @ColorInt color: Int) {
@@ -402,6 +415,30 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         appIsReady = true
         lifecycleScope.launch {
             pushPlaybackState()
+        }
+    }
+
+    private var versionTapCount = 0
+    private var versionTapLastTime = 0L
+    fun setVersionListeners() {
+        binding.navPlazaLabel.setOnClickListener {
+            val now = SystemClock.elapsedRealtime()
+
+            if (now - versionTapLastTime > 1000) {
+                versionTapCount = 0
+            }
+            versionTapLastTime = now
+            versionTapCount++
+
+            if (versionTapCount == 7) {
+                versionTapCount = 0
+
+                val isDevNow = !Settings.useDevChannel
+                Settings.useDevChannel = isDevNow
+
+                val channelName = if (isDevNow) "DEV" else "PROD"
+                Toast.makeText(this, "OTA Channel switched to: $channelName", Toast.LENGTH_LONG).show()
+            }
         }
     }
 }

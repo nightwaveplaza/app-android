@@ -5,6 +5,7 @@ import androidx.core.content.pm.PackageInfoCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import okhttp3.Request
+import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.extensions.calculateSha256
 import timber.log.Timber
@@ -28,8 +29,14 @@ class WebAppUpdateWorker(
         try {
             Timber.d("Checking new view version...")
 
+            val manifestFileName = if (Settings.useDevChannel) {
+                "dev-manifest.json"
+            } else {
+                "update-manifest.json"
+            }
+
             val currentViewVersion = getLocalViewVersion(appContext)
-            val manifest = ApiClient.getManifest()
+            val manifest = ApiClient.getManifest(manifestFileName)
 
             val targetConfig = manifest.versions
                 .filter { it.minAndroid <= currentAppVersionCode }
