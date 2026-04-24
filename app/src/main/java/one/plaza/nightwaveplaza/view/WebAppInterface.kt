@@ -14,7 +14,7 @@ class WebAppInterface(private val callback: WebViewCallback) {
     }
 
     @JavascriptInterface
-    fun audioPlay() {
+    fun playAudio() {
         callback.onPlayAudio()
     }
 
