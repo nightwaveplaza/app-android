@@ -15,12 +15,12 @@ val plazaProperties = Properties().apply {
 
 android {
     namespace = "one.plaza.nightwaveplaza"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 37
         versionCode = 244
         versionName = "2.1.4"
 
