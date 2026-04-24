@@ -39,11 +39,21 @@ jobs:
           TAG_NAME="${{ github.ref_name }}"
           APP_VERSION="v${{ env.version_name }}"
           
-          if [ "$TAG_NAME" != "$APP_VERSION" ]; then
-            echo "::error::Tag name ($TAG_NAME) does not match Gradle version ($APP_VERSION)!"
+          if [[ "$TAG_NAME" == *-dev* ]]; then
+            echo "IS_DEV=true" >> $GITHUB_ENV
+            EXPECTED_TAG="v${APP_VERSION}-dev"
+          else
+            echo "IS_DEV=false" >> $GITHUB_ENV
+            EXPECTED_TAG="v${APP_VERSION}"
+          fi
+          
+          if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
+            echo "::error::Tag name ($TAG_NAME) does not match expected tag ($EXPECTED_TAG) based on App version ($APP_VERSION)!"
             exit 1
           fi
-          echo "Tag and version match: $TAG_NAME"
+          
+          echo "APK_VERSION=${TAG_NAME#v}" >> $GITHUB_ENV
+          echo "Tag verified. Building for version: $APK_VERSION (Dev Mode: $IS_DEV)"
 
       - name: Checkout keystore repo
         uses: actions/checkout@v4
@@ -66,21 +76,21 @@ jobs:
           ./gradlew bundleRelease
 
       - name: Rename release file
-        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
+        run: mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/NightwavePlaza-${{ env.APK_VERSION }}.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: Upload artifact
-          path: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
+          path: app/build/outputs/apk/release/NightwavePlaza-${{ env.APK_VERSION }}.apk
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          name: Release ${{ env.version_name }}
-          files: app/build/outputs/apk/release/NightwavePlaza-${{ env.version_name }}.apk
+          name: Release ${{ env.APK_VERSION }}
+          files: app/build/outputs/apk/release/NightwavePlaza-${{ env.APK_VERSION }}.apk
           draft: false
-          prerelease: false
+          prerelease: ${{ env.IS_DEV == 'true' }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

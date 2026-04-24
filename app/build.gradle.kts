@@ -13,6 +13,9 @@ val plazaProperties = Properties().apply {
     }
 }
 
+val isDevBuild = System.getenv("IS_DEV") == "true" ||
+        gradle.startParameter.taskNames.any { it.contains("Debug", ignoreCase = true) }
+
 android {
     namespace = "one.plaza.nightwaveplaza"
     compileSdk = 37
@@ -21,8 +24,8 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 37
-        versionCode = 244
-        versionName = "2.1.4"
+        versionCode = 245
+        versionName = "2.1.5"
 
         buildFeatures {
             buildConfig = true
@@ -35,6 +38,7 @@ android {
         fun String.asConfigValue() = "\"$this\""
         buildConfigField("String", "PLAZA_API", plazaProperties.getProperty("PLAZA_API", "").asConfigValue())
         buildConfigField("String", "PLAZA_URL_OVERRIDE", plazaProperties.getProperty("PLAZA_URL_OVERRIDE", "").asConfigValue())
+        buildConfigField("boolean", "IS_DEV_CHANNEL", isDevBuild.toString())
 
         manifestPlaceholders += mapOf(
             "sentryDsn" to plazaProperties.getProperty("SENTRY_DSN", "")
@@ -133,25 +137,29 @@ tasks.register("printVersionName") {
 tasks.register("createReleaseTag") {
     val vName = android.defaultConfig.versionName ?: "unknown"
     val vCode = android.defaultConfig.versionCode ?: 0
+    val isDev = project.hasProperty("dev")
 
     doLast {
         val versionName = "$vName-b$vCode"
-        val tagName = "v${versionName}"
+        val suffix = if (isDev) "-dev" else ""
+        val tagName = "v${versionName}${suffix}"
+        val tagMessage = if (isDev) "Dev Release $versionName" else "Release $versionName"
 
         println("Creating tag: ${tagName}...")
-        val process = ProcessBuilder(listOf("git", "tag", "-a", tagName, "-m", "Release $versionName")).start()
+        val process = ProcessBuilder(listOf("git", "tag", "-a", tagName, "-m", tagMessage)).start()
         process.waitFor()
         if (process.exitValue() == 0) {
-            println("Tag ${tagName} created.")
+            println("Tag $tagName created.")
         } else {
             val errorText = process.errorStream.bufferedReader().use { it.readText() }
-            println("Error creating tag: ${errorText}")
+            println("Error creating tag: $errorText")
         }
     }
 }
 
 tasks.register<FetchAppViewTask>("fetchAndEmbedView") {
-    manifestUrl.set("https://akai.plaza.one/app-view/update-manifest.json")
+    val manifestFileName = if (isDevBuild) "dev-manifest.json" else "update-manifest.json"
+    manifestUrl.set(manifestFileName)
     appVersionCode.set(android.defaultConfig.versionCode ?: 1)
     assetsDir.set(layout.projectDirectory.dir("src/main/assets/www"))
 
