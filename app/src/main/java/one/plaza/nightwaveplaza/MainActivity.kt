@@ -8,6 +8,7 @@ import android.os.SystemClock
 import android.view.View
 import android.view.Window
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -15,11 +16,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.graphics.toColorInt
 import androidx.core.os.LocaleListCompat
 import androidx.core.view.GravityCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.updatePadding
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
@@ -75,10 +73,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Button binding
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            enableEdgeToEdge()
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setupNavigationListeners()
 
         glideRequestManager = Glide.with(this)
 
@@ -93,14 +93,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         webViewManager.initialize()
         webViewManager.load()
 
-        // Layout
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        applyBottomNavInset(binding.viewLayout)
-        applyBottomNavInset(binding.navBottomBlock)
-
         setNavigationBarColor(window, Settings.themeColor.toColorInt())
         scheduleBackgroundUpdate()
-        setVersionListeners()
+        setVersionSwitchListener()
     }
 
     private fun setupNavigationListeners() {
@@ -117,6 +112,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
      * Configure navigation drawer
      */
     private fun setupDrawer() {
+        setupNavigationListeners()
         binding.navView.setOnApplyWindowInsetsListener { _, insets -> insets }
         binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.START)
         binding.drawer.drawerElevation = 0f
@@ -164,16 +160,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
             @Suppress("DEPRECATION")
             window.navigationBarColor = color
         }
-    }
-
-    fun applyBottomNavInset(view: View) {
-        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
-            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
-            v.updatePadding(bottom = nav.bottom)
-            insets
-        }
-
-        ViewCompat.requestApplyInsets(view)
     }
 
     /**
@@ -280,15 +266,17 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
      * Apply fullscreen mode based on current settings
      */
     private fun setFullscreen() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         val insetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         if (Settings.fullScreen) {
-            insetsController.hide(WindowInsetsCompat.Type.systemBars())
+            // immersive mode, hide all
             insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            insetsController.hide(WindowInsetsCompat.Type.systemBars())
         } else {
             insetsController.show(WindowInsetsCompat.Type.systemBars())
         }
+
+        // call insets recalc css
         window.decorView.requestApplyInsets()
     }
 
@@ -420,7 +408,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
 
     private var versionTapCount = 0
     private var versionTapLastTime = 0L
-    fun setVersionListeners() {
+    fun setVersionSwitchListener() {
         binding.navPlazaLabel.setOnClickListener {
             val now = SystemClock.elapsedRealtime()
 
