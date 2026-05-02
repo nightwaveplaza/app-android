@@ -158,7 +158,7 @@ tasks.register("createReleaseTag") {
 }
 
 tasks.register<FetchAppViewTask>("fetchAndEmbedView") {
-    val manifestFileName = if (isDevBuild) "dev-manifest.json" else "update-manifest.json"
+    val manifestFileName = if (isDevBuild) "dev-manifest-android.json" else "manifest-android.json"
     manifestUrl.set(manifestFileName)
     appVersionCode.set(android.defaultConfig.versionCode ?: 1)
     assetsDir.set(layout.projectDirectory.dir("src/main/assets/www"))

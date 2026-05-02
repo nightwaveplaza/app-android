@@ -30,9 +30,9 @@ class WebAppUpdateWorker(
             Timber.d("Checking new view version...")
 
             val manifestFileName = if (Settings.useDevChannel) {
-                "dev-manifest.json"
+                "dev-manifest-android.json"
             } else {
-                "update-manifest.json"
+                "manifest-android.json"
             }
 
             val currentViewVersion = getLocalViewVersion(appContext)
