@@ -9,11 +9,4 @@
     <string name="support">Support Us</string>
     <string name="history">Play History</string>
     <string name="no_internet">Sorry, we\'re unable to connect you to our services. Retrying…</string>
-
-    <!-- default text -->
-    <string name="button_icon" translatable="false">Button icon</string>
-    <string name="button_text" translatable="false">Button text</string>
-    <string name="background_image" translatable="false">Background image</string>
-    <string name="loading_image">Loading image</string>
-
 </resources>

@@ -1,0 +1,15 @@
+project_id: "893416"
+base_path: "."
+preserve_hierarchy: true
+
+files:
+  - source: app/src/main/res/values/strings.xml
+    translation: /app/src/main/res/values-%two_letters_code%/strings.xml
+    dest: "/Nightwave Plaza Android/NightwavePlaza.xml"
+
+    "languages_mapping": {
+      "two_letters_code": {
+        "pt-BR": "pt-rBR",
+        "zh-TW": "zh-rTW"
+      }
+    }

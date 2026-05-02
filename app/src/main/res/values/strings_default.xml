@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- default text -->
+    <string name="button_icon" translatable="false">Button icon</string>
+    <string name="button_text" translatable="false">Button text</string>
+    <string name="background_image" translatable="false">Background image</string>
+    <string name="loading_image" translatable="false">Loading image</string>
+</resources>
