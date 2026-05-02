@@ -24,7 +24,7 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 37
-        versionCode = 245
+        versionCode = 246
         versionName = "2.1.5"
 
         buildFeatures {
