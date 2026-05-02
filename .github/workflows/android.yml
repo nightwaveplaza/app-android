@@ -33,7 +33,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
 
       - name: Setup Crowdin CLI
         run: npm i -g @crowdin/cli
