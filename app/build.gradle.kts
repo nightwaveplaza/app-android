@@ -110,7 +110,7 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-hls:1.10.1")
 
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
-    implementation("androidx.webkit:webkit:1.16.0")
+    implementation("androidx.webkit:webkit:1.15.0")
 
     implementation("com.github.bumptech.glide:glide:5.0.7")
 
