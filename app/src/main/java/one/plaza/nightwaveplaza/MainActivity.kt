@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
 
         glideRequestManager = Glide.with(this)
 
-        setupDrawer()
+        //setupDrawer()
 
         // WebView initialization
         webViewManager = WebViewManager(
