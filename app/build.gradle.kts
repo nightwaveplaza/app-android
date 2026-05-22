@@ -24,8 +24,8 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 37
-        versionCode = 246
-        versionName = "2.1.5"
+        versionCode = 248
+        versionName = "2.1.6"
 
         buildFeatures {
             buildConfig = true
@@ -95,8 +95,8 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    implementation("com.google.android.material:material:1.13.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
+    implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.activity:activity-ktx:1.13.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.core:core-ktx:1.18.0")
@@ -105,17 +105,17 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("androidx.work:work-runtime-ktx:2.11.2")
 
-    implementation("androidx.media3:media3-exoplayer:1.10.0")
-    implementation("androidx.media3:media3-session:1.10.0")
-    implementation("androidx.media3:media3-exoplayer-hls:1.10.0")
+    implementation("androidx.media3:media3-exoplayer:1.10.1")
+    implementation("androidx.media3:media3-session:1.10.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.10.1")
 
     implementation("com.squareup.okhttp3:okhttp:5.3.2")
-    implementation("androidx.webkit:webkit:1.15.0")
+    implementation("androidx.webkit:webkit:1.16.0")
 
     implementation("com.github.bumptech.glide:glide:5.0.7")
 
     implementation("com.jakewharton.timber:timber:5.0.1")
-    implementation("io.sentry:sentry-android:8.39.1")
+    implementation("io.sentry:sentry-android:8.42.0")
     //debugImplementation "com.squareup.leakcanary:leakcanary-android:2.14"
 }
 
@@ -159,7 +159,7 @@ tasks.register("createReleaseTag") {
 
 tasks.register<FetchAppViewTask>("fetchAndEmbedView") {
     val manifestFileName = if (isDevBuild) "dev-manifest-android.json" else "manifest-android.json"
-    manifestUrl.set(manifestFileName)
+    manifestUrl.set("https://akai.plaza.one/app-view/$manifestFileName")
     appVersionCode.set(android.defaultConfig.versionCode ?: 1)
     assetsDir.set(layout.projectDirectory.dir("src/main/assets/www"))
 
