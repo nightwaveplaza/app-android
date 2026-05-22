@@ -19,6 +19,11 @@ class WebAppInterface(private val callback: WebViewCallback) {
     }
 
     @JavascriptInterface
+    fun stopAudio() {
+        callback.onPlayAudio()
+    }
+
+    @JavascriptInterface
     fun setBackground(backgroundSrc: String) {
         callback.onSetBackground(backgroundSrc)
     }
