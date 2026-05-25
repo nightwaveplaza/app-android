@@ -114,7 +114,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        if (Settings.useDevChannel) {
+        val updateImmediately = false
+
+        if (updateImmediately) {
             val updateRequest = OneTimeWorkRequestBuilder<WebAppUpdateWorker>()
                 .setConstraints(constraints)
                 .build()
