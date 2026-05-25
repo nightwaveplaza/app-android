@@ -82,8 +82,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
 
         glideRequestManager = Glide.with(this)
 
-        //setupDrawer()
-
         // WebView initialization
         webViewManager = WebViewManager(
             callback = this,
@@ -95,7 +93,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
 
         setNavigationBarColor(window, Settings.themeColor.toColorInt())
         scheduleBackgroundUpdate()
-        setVersionSwitchListener()
     }
 
     private fun setupNavigationListeners() {
@@ -106,16 +103,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         navItems.forEach { view ->
             view.setOnClickListener { showWindow(it) }
         }
-    }
-
-    /**
-     * Configure navigation drawer
-     */
-    private fun setupDrawer() {
-        setupNavigationListeners()
-        binding.navView.setOnApplyWindowInsetsListener { _, insets -> insets }
-        binding.drawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED, GravityCompat.START)
-        binding.drawer.drawerElevation = 0f
     }
 
     /**
@@ -362,10 +349,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     override fun onWebViewLoaded() {
     }
 
-    override fun onOpenDrawer() {
-        lifecycleScope.launch { binding.drawer.openDrawer(GravityCompat.START) }
-    }
-
     override fun onPlayAudio() {
         lifecycleScope.launch {
             controller?.let { if (it.isPlaying) it.pause() else it.play(this@MainActivity) }
@@ -403,30 +386,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         appIsReady = true
         lifecycleScope.launch {
             pushPlaybackState()
-        }
-    }
-
-    private var versionTapCount = 0
-    private var versionTapLastTime = 0L
-    fun setVersionSwitchListener() {
-        binding.navPlazaLabel.setOnClickListener {
-            val now = SystemClock.elapsedRealtime()
-
-            if (now - versionTapLastTime > 1000) {
-                versionTapCount = 0
-            }
-            versionTapLastTime = now
-            versionTapCount++
-
-            if (versionTapCount == 7) {
-                versionTapCount = 0
-
-                val isDevNow = !Settings.useDevChannel
-                Settings.useDevChannel = isDevNow
-
-                val channelName = if (isDevNow) "DEV" else "PROD"
-                Toast.makeText(this, "OTA Channel switched to: $channelName", Toast.LENGTH_LONG).show()
-            }
         }
     }
 }

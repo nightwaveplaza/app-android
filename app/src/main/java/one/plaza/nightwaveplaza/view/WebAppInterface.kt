@@ -9,11 +9,6 @@ import one.plaza.nightwaveplaza.helpers.Utils
 @UnstableApi
 class WebAppInterface(private val callback: WebViewCallback) {
     @JavascriptInterface
-    fun openDrawer() {
-        callback.onOpenDrawer()
-    }
-
-    @JavascriptInterface
     fun playAudio() {
         callback.onPlayAudio()
     }

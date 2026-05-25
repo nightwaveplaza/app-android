@@ -4,7 +4,6 @@ interface WebViewCallback {
     fun onWebViewLoaded()
     fun onWebViewLoadFail()
 
-    fun onOpenDrawer()
     fun onPlayAudio()
     fun onSetBackground(backgroundSrc: String)
     fun onToggleFullscreen()

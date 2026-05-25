@@ -24,7 +24,7 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 37
-        versionCode = 248
+        versionCode = 249
         versionName = "2.1.6"
 
         buildFeatures {
@@ -38,7 +38,6 @@ android {
         fun String.asConfigValue() = "\"$this\""
         buildConfigField("String", "PLAZA_API", plazaProperties.getProperty("PLAZA_API", "").asConfigValue())
         buildConfigField("String", "PLAZA_URL_OVERRIDE", plazaProperties.getProperty("PLAZA_URL_OVERRIDE", "").asConfigValue())
-        buildConfigField("boolean", "IS_DEV_CHANNEL", isDevBuild.toString())
 
         manifestPlaceholders += mapOf(
             "sentryDsn" to plazaProperties.getProperty("SENTRY_DSN", "")
