@@ -95,16 +95,6 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         scheduleBackgroundUpdate()
     }
 
-    private fun setupNavigationListeners() {
-        val navItems = listOf(
-            binding.nav.ratings, binding.nav.history, binding.nav.userFavorites,
-            binding.nav.user, binding.nav.settings, binding.nav.about, binding.nav.support
-        )
-        navItems.forEach { view ->
-            view.setOnClickListener { showWindow(it) }
-        }
-    }
-
     /**
      * Schedule view update every 12 hours
      */
