@@ -157,7 +157,8 @@ tasks.register("createReleaseTag") {
 }
 
 tasks.register<FetchAppViewTask>("fetchAndEmbedView") {
-    val manifestFileName = if (isDevBuild) "dev-manifest-android.json" else "manifest-android.json"
+    val isDev = project.hasProperty("dev")
+    val manifestFileName = if (isDevBuild || isDev) "dev-manifest-android.json" else "manifest-android.json"
     manifestUrl.set("https://akai.plaza.one/app-view/$manifestFileName")
     appVersionCode.set(android.defaultConfig.versionCode ?: 1)
     assetsDir.set(layout.projectDirectory.dir("src/main/assets/www"))

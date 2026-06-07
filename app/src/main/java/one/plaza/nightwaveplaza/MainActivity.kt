@@ -364,7 +364,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     }
 
     override fun onSetLanguage(lang: String) {
-        lifecycleScope.launch { setLanguage(lang) }
+        // todo remove call
+        // lifecycleScope.launch { setLanguage(lang) }
     }
 
     override fun onSetThemeColor(color: String) {
