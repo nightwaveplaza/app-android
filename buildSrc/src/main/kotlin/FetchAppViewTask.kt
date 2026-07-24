@@ -20,27 +20,31 @@ abstract class FetchAppViewTask @Inject constructor(
     private val archives: ArchiveOperations
 ) : DefaultTask() {
 
-    @get:Input
-    abstract val manifestUrl: Property<String>
-
-    @get:Input
-    abstract val appVersionCode: Property<Int>
-
-    @get:OutputDirectory
-    abstract val assetsDir: DirectoryProperty
+    @get:Input abstract val manifestUrl: Property<String>
+    @get:Input abstract val bundleUrl: Property<String>
+    @get:Input abstract val appVersionCode: Property<Int>
+    @get:OutputDirectory abstract val assetsDir: DirectoryProperty
 
     @TaskAction
     fun fetchView() {
         val outDir = assetsDir.get().asFile
-        val versionFile = File(outDir, "version.txt")
         val zipFile = File(temporaryDir, "view.zip")
 
-        println(">>> [AppView] Fetching version manifest...")
+        if (bundleUrl.get().isNotEmpty()) {
+            println(">>> [AppView] Downloading dev bundle...")
+            downloadFile(bundleUrl.get(), zipFile)
+            extractAndClean(zipFile, outDir)
+            println(">>> [AppView] Dev bundle embedded.")
+            return
+        } else {
+            println(">>> [AppView] Downloading production bundle...")
+        }
 
+        println(">>> [AppView] Fetching version manifest...")
         val jsonText = try {
             URI(manifestUrl.get()).toURL().readText()
         } catch (e: Exception) {
-            println(">>> [AppView] Failed to fetch manifest. Network issue? Skipping. ($e)")
+            println(">>> [AppView] Failed to fetch manifest. Skipping. ($e)")
             return
         }
 
@@ -50,38 +54,34 @@ abstract class FetchAppViewTask @Inject constructor(
         val targetConfig = versions
             .filter { (it["min_android"] as Int) <= appVersionCode.get() }
             .maxByOrNull { it["view_version"] as Int }
+            ?: run {
+                println(">>> [AppView] No compatible view version found. Skipping.")
+                return
+            }
 
-        if (targetConfig == null) {
-            println(">>> [AppView] No compatible view version found. Skipping.")
-            return
-        }
-
-        val targetViewVersion = targetConfig["view_version"] as Int
         val targetUrl = targetConfig["url"] as String
         val expectedHash = targetConfig["sha256"] as String
 
-        if (versionFile.exists()) {
-            val currentVersion = versionFile.readText().trim().toIntOrNull() ?: 0
-            if (currentVersion >= targetViewVersion) {
-                println(">>> [AppView] Local view ($currentVersion) is up to date. Skip downloading.")
-                return
-            }
-        }
+        println(">>> [AppView] Downloading view version ${targetConfig["view_version"]}...")
+        downloadFile(targetUrl, zipFile)
+        verifyHash(zipFile, expectedHash)
+        extractAndClean(zipFile, outDir)
+        println(">>> [AppView] Version ${targetConfig["view_version"]} successfully embedded.")
+    }
 
-        println(">>> [AppView] Downloading view version $targetViewVersion...")
-
+    private fun downloadFile(url: String, dest: File) {
         try {
-            URI(targetUrl).toURL().openStream().use { input ->
-                zipFile.outputStream().use { output ->
-                    input.copyTo(output)
-                }
+            URI(url).toURL().openStream().use { input ->
+                dest.outputStream().use { input.copyTo(it) }
             }
         } catch (e: Exception) {
-            throw GradleException("Failed to download AppView: $e")
+            throw GradleException("Failed to download: $e")
         }
+    }
 
+    private fun verifyHash(file: File, expectedHash: String) {
         val digest = MessageDigest.getInstance("SHA-256")
-        zipFile.inputStream().use { fis ->
+        file.inputStream().use { fis ->
             val buffer = ByteArray(8192)
             var read = fis.read(buffer)
             while (read != -1) {
@@ -90,22 +90,19 @@ abstract class FetchAppViewTask @Inject constructor(
             }
         }
         val calculatedHash = digest.digest().joinToString("") { "%02x".format(it) }
-
         if (!calculatedHash.equals(expectedHash, ignoreCase = true)) {
-            zipFile.delete()
+            file.delete()
             throw GradleException("Hash mismatch! Expected: $expectedHash, Got: $calculatedHash")
         }
+    }
 
+    private fun extractAndClean(zipFile: File, outDir: File) {
         if (outDir.exists()) outDir.deleteRecursively()
         outDir.mkdirs()
-
         fs.copy {
             from(archives.zipTree(zipFile))
             into(outDir)
         }
-
         zipFile.delete()
-        versionFile.writeText(targetViewVersion.toString())
-        println(">>> [AppView] Version $targetViewVersion successfully embedded.")
     }
 }

@@ -5,6 +5,7 @@ import androidx.core.content.pm.PackageInfoCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import okhttp3.Request
+import one.plaza.nightwaveplaza.BuildConfig
 import one.plaza.nightwaveplaza.Settings
 import one.plaza.nightwaveplaza.api.ApiClient
 import one.plaza.nightwaveplaza.extensions.calculateSha256
@@ -22,6 +23,11 @@ class WebAppUpdateWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        if (BuildConfig.VIEW_MANIFEST_URL.isEmpty()) {
+            Timber.d("VIEW_MANIFEST_URL is empty. Skip updating.")
+            return Result.success()
+        }
+
         val appContext = applicationContext
         val pInfo = appContext.packageManager.getPackageInfo(appContext.packageName, 0)
         val currentAppVersionCode = PackageInfoCompat.getLongVersionCode(pInfo).toInt()
@@ -29,10 +35,8 @@ class WebAppUpdateWorker(
         try {
             Timber.d("Checking new view version...")
 
-            val manifestFileName = "manifest-android.json"
-
             val currentViewVersion = getLocalViewVersion(appContext)
-            val manifest = ApiClient.getManifest(manifestFileName)
+            val manifest = ApiClient.getManifest(BuildConfig.VIEW_MANIFEST_URL)
 
             val targetConfig = manifest.versions
                 .filter { it.minAndroid <= currentAppVersionCode }

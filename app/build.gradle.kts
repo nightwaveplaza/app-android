@@ -13,9 +13,6 @@ val plazaProperties = Properties().apply {
     }
 }
 
-val isDevBuild = System.getenv("IS_DEV") == "true" ||
-        gradle.startParameter.taskNames.any { it.contains("Debug", ignoreCase = true) }
-
 android {
     namespace = "one.plaza.nightwaveplaza"
     compileSdk = 37
@@ -24,8 +21,8 @@ android {
         applicationId = "one.plaza.nightwaveplaza"
         minSdk = 23
         targetSdk = 37
-        versionCode = 249
-        versionName = "2.1.6"
+        versionCode = 253
+        versionName = "26.7.1"
 
         buildFeatures {
             buildConfig = true
@@ -38,6 +35,7 @@ android {
         fun String.asConfigValue() = "\"$this\""
         buildConfigField("String", "PLAZA_API", plazaProperties.getProperty("PLAZA_API", "").asConfigValue())
         buildConfigField("String", "PLAZA_URL_OVERRIDE", plazaProperties.getProperty("PLAZA_URL_OVERRIDE", "").asConfigValue())
+        buildConfigField("String", "VIEW_MANIFEST_URL", "\"https://akai.plaza.one/app-view/manifest-android.json\"")
 
         manifestPlaceholders += mapOf(
             "sentryDsn" to plazaProperties.getProperty("SENTRY_DSN", "")
@@ -66,6 +64,11 @@ android {
         debug {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            buildConfigField("String", "VIEW_MANIFEST_URL", "\"\"")
+        }
+        create("beta") {
+            initWith(getByName("release"))
+            buildConfigField("String", "VIEW_MANIFEST_URL", "\"\"")
         }
     }
 
@@ -157,9 +160,12 @@ tasks.register("createReleaseTag") {
 }
 
 tasks.register<FetchAppViewTask>("fetchAndEmbedView") {
-    val isDev = project.hasProperty("dev")
-    val manifestFileName = if (isDevBuild || isDev) "dev-manifest-android.json" else "manifest-android.json"
-    manifestUrl.set("https://akai.plaza.one/app-view/$manifestFileName")
+    if (project.hasProperty("dev")) {
+        bundleUrl.set("https://akai.plaza.one/app-view/dev/build-mobile-snapshot.zip")
+    } else {
+        bundleUrl.set("")
+    }
+    manifestUrl.set("https://akai.plaza.one/app-view/manifest-android.json")
     appVersionCode.set(android.defaultConfig.versionCode ?: 1)
     assetsDir.set(layout.projectDirectory.dir("src/main/assets/www"))
 
