@@ -55,7 +55,7 @@ class WebAppInterface(private val callback: WebViewCallback) {
 
     @JavascriptInterface
     fun getAppVersion(): String {
-        return "${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+        return "${BuildConfig.VERSION_NAME}-${BuildConfig.VERSION_CODE}"
     }
 
     @JavascriptInterface
