@@ -101,8 +101,8 @@ dependencies {
     implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.activity:activity-ktx:1.13.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("androidx.core:core-ktx:1.18.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("androidx.work:work-runtime-ktx:2.11.2")
@@ -111,13 +111,13 @@ dependencies {
     implementation("androidx.media3:media3-session:1.10.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.10.1")
 
-    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+    implementation("com.squareup.okhttp3:okhttp:5.4.0")
     implementation("androidx.webkit:webkit:1.15.0")
 
-    implementation("com.github.bumptech.glide:glide:5.0.7")
+    implementation("com.github.bumptech.glide:glide:5.0.9")
 
     implementation("com.jakewharton.timber:timber:5.0.1")
-    implementation("io.sentry:sentry-android:8.42.0")
+    implementation("io.sentry:sentry-android:8.51.0")
     //debugImplementation "com.squareup.leakcanary:leakcanary-android:2.14"
 }
 
