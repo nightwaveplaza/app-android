@@ -1,6 +1,7 @@
 package one.plaza.nightwaveplaza.view
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -11,6 +12,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.coroutineScope
@@ -20,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import one.plaza.nightwaveplaza.BuildConfig
+import one.plaza.nightwaveplaza.R
 import one.plaza.nightwaveplaza.api.Json
 import one.plaza.nightwaveplaza.updater.WebAppAssetResolver
 import org.json.JSONObject
@@ -173,7 +176,13 @@ class WebViewManager(
 
             // Open external links in browser
             return if (!request.url.toString().startsWith("https://appassets.androidplatform.net")) {
-                view.context.startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                try {
+                    view.context.startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                } catch (_: ActivityNotFoundException) {
+                    // device can have no browser at all: removed, disabled or blocked by policy
+                    Toast.makeText(view.context, R.string.no_app_to_open_link, Toast.LENGTH_SHORT)
+                        .show()
+                }
                 true
             } else {
                 false
