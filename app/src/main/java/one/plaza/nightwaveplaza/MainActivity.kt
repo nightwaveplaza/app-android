@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.InflateException
 import android.view.View
 import android.view.Window
 import android.widget.Toast
@@ -79,7 +80,15 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
             enableEdgeToEdge()
         }
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = try {
+            ActivityMainBinding.inflate(layoutInflater)
+        } catch (e: InflateException) {
+            // the whole ui is a webview, without a provider there is nothing left to show
+            Timber.e(e, "No usable WebView provider")
+            Toast.makeText(this, R.string.webview_unavailable, Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
         setContentView(binding.root)
 
         glideRequestManager = Glide.with(this)
@@ -173,7 +182,10 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
 
     override fun onDestroy() {
         super.onDestroy()
-        binding.webview.destroy()
+        // onCreate bails out before inflating when there is no WebView provider
+        if (::binding.isInitialized) {
+            binding.webview.destroy()
+        }
     }
 
     // WebView state preservation
