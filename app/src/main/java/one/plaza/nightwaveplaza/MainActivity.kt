@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import one.plaza.nightwaveplaza.databinding.ActivityMainBinding
 import one.plaza.nightwaveplaza.extensions.play
 import one.plaza.nightwaveplaza.extensions.setSleepTimer
+import one.plaza.nightwaveplaza.extensions.toColorIntOrNull
 import one.plaza.nightwaveplaza.updater.WebAppUpdateWorker
 import one.plaza.nightwaveplaza.view.WebViewCallback
 import one.plaza.nightwaveplaza.view.WebViewManager
@@ -91,7 +92,9 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
         webViewManager.initialize()
         webViewManager.load()
 
-        setNavigationBarColor(window, Settings.themeColor.toColorInt())
+        val themeColor = Settings.themeColor.toColorIntOrNull()
+            ?: Settings.DEFAULT_THEME_COLOR.toColorInt()
+        setNavigationBarColor(window, themeColor)
         scheduleBackgroundUpdate()
     }
 
@@ -369,9 +372,12 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     }
 
     override fun onSetThemeColor(color: String) {
+        // don't persist an unparseable color, it would crash on every next start
+        val colorInt = color.toColorIntOrNull() ?: return
+
         lifecycleScope.launch {
             Settings.themeColor = color
-            setNavigationBarColor(window, color.toColorInt())
+            setNavigationBarColor(window, colorInt)
         }
     }
 

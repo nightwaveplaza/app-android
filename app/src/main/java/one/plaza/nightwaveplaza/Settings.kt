@@ -21,11 +21,13 @@ inline fun <reified T> preference(
 }
 
 object Settings {
+    const val DEFAULT_THEME_COLOR = "#c0c0c0"
+
     var isPlaying       by preference("IsPlaying") { false }
     var sleepTargetTime by preference("sleepTargetTimer") { 0L }
     var userToken       by preference("UserToken") { "" }
     var fullScreen      by preference("Fullscreen") { false }
     var lowQualityAudio by preference("AudioLowQuality") { false }
     var language        by preference("Language") { Locale.getDefault().language }
-    var themeColor      by preference("ThemeColor") { "#c0c0c0" }
+    var themeColor      by preference("ThemeColor") { DEFAULT_THEME_COLOR }
 }
