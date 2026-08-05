@@ -60,7 +60,8 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
     // Controller for media playback operations
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private val controller: MediaController?
-        get() = controllerFuture?.let { if (it.isDone) it.get() else null }
+        // isDone is true for a cancelled future as well, get() would throw on it
+        get() = controllerFuture?.let { if (it.isDone && !it.isCancelled) it.get() else null }
 
     // WebView manager
     private lateinit var webViewManager: WebViewManager
@@ -212,14 +213,16 @@ class MainActivity : AppCompatActivity(), WebViewCallback {
      * Clean up media controller resources
      */
     private fun releaseController() {
-        controllerFuture?.let { future ->
-            if (future.isDone) {
-                future.get().removeListener(playerListener)
-                future.get().release()
-            }
-            MediaController.releaseFuture(future)
-        }
+        val future = controllerFuture ?: return
+        // releaseFuture() cancels a pending future synchronously, which runs the build
+        // listener on directExecutor, so drop the reference before it can be read back
         controllerFuture = null
+
+        if (future.isDone && !future.isCancelled) {
+            future.get().removeListener(playerListener)
+            future.get().release()
+        }
+        MediaController.releaseFuture(future)
     }
     /**
      * Media player state listener to sync UI with playback state
