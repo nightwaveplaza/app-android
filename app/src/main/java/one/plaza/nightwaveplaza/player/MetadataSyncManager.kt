@@ -23,6 +23,23 @@ class MetadataSyncManager(
 ) {
     private val mutex = Mutex()
 
+    private var appliedArtist: String? = null
+    private var appliedTitle: String? = null
+
+    /**
+     * Entry point for player metadata changes, which is what signals a new song on the stream
+     */
+    fun onMetadataChanged(metadata: MediaMetadata, scope: CoroutineScope) {
+        // updateMediaItem() replaces the item and gets this called back with its own values
+        if (appliedTitle != null &&
+            metadata.artist?.toString() == appliedArtist &&
+            metadata.title?.toString() == appliedTitle
+        ) {
+            return
+        }
+        fetchAndUpdate(scope)
+    }
+
     fun fetchAndUpdate(scope: CoroutineScope) {
         scope.launch(Dispatchers.IO) {
             mutex.withLock {
@@ -64,6 +81,8 @@ class MetadataSyncManager(
             .setMediaMetadata(updatedMetadata)
             .build()
 
+        appliedArtist = song.artist
+        appliedTitle = song.title
         player.replaceMediaItem(player.currentMediaItemIndex, updatedItem)
     }
 

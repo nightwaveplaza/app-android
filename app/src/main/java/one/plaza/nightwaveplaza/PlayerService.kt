@@ -82,6 +82,16 @@ class PlayerService : MediaLibraryService() {
         setMediaNotificationProvider(notificationProvider)
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // a sticky restart after a process kill delivers a null intent, media3 posts no
+        // notification for it and the foreground watchdog kills us five seconds later
+        if (intent == null) {
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
 
@@ -229,7 +239,7 @@ class PlayerService : MediaLibraryService() {
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            syncManager.fetchAndUpdate(serviceScope)
+            syncManager.onMetadataChanged(mediaMetadata, serviceScope)
         }
 
         override fun onPlayerError(error: PlaybackException) {
