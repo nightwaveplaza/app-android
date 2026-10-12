@@ -4,11 +4,11 @@
 
 **Nightwave Plaza** is an advertisement-free 24/7 radio station dedicated to Vaporwave; bringing aesthetics and dream-like music to your device wherever you have Internet connectivity.
 
-<a href="https://play.google.com/store/apps/details?id=one.plaza.nightwaveplaza"><img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" height="75"></a>
+[![Google Play](https://img.shields.io/badge/Google_Play-414141?style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/store/apps/details?id=one.plaza.nightwaveplaza)
+[![GitHub release](https://img.shields.io/github/v/release/nightwaveplaza/app-android?style=for-the-badge&logo=github&label=GitHub&color=414141)](https://github.com/nightwaveplaza/app-android/releases/latest)
+[![Obtainium](https://img.shields.io/badge/Obtainium-414141?style=for-the-badge&logo=obtainium&logoColor=white)](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/nightwaveplaza/app-android)
 
-APK builds are also available on the [Releases](https://github.com/nightwaveplaza/app-android/releases) page. Requires Android 6.0 or newer.
-
-These are the only official sources. The app's package name is `one.plaza.nightwaveplaza`; anything else using the Nightwave Plaza name in app stores is not ours.
+Requires Android 6.0 or newer.
 
 ## How it works
 
